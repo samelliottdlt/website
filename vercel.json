@@ -8,7 +8,7 @@
           "value": "beluga.sdelatorrebaba.com"
         }
       ],
-      "destination": "https://sams-awesome-space.nyc3.digitaloceanspaces.com/index.html"
+      "destination": "https://sams-awesome-space.nyc3.digitaloceanspaces.com/index.html/:path*"
     }
   ]
 }

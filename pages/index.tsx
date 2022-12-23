@@ -1,5 +1,5 @@
-function HomePage() {
-  return <div>Welcome to Next.js!</div>;
+function Home() {
+  return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
 }
 
-export default HomePage;
+export default Home;

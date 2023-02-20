@@ -24,15 +24,20 @@
     "@headlessui/react": "^1.7.7",
     "@heroicons/react": "^2.0.13",
     "@next/font": "^13.1.0",
+    "@tailwindcss/line-clamp": "^0.4.2",
     "@types/node": "18.11.17",
     "@types/react": "18.0.26",
     "autoprefixer": "^10.4.13",
     "eslint-config-next": "^13.1.0",
     "eslint-config-prettier": "^8.5.0",
+    "gray-matter": "^4.0.3",
+    "marked": "^4.2.12",
     "next": "^13.1.0",
     "prettier": "^2.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "remark": "^14.0.2",
+    "remark-html": "^15.0.2",
     "tailwindcss": "^3.2.4",
     "typescript": "^4.9.4",
     "vercel": "^28.10.0"
@@ -41,5 +46,8 @@
     "last 1 version",
     "> 1%",
     "not dead"
-  ]
+  ],
+  "devDependencies": {
+    "@types/marked": "^4.0.8"
+  }
 }

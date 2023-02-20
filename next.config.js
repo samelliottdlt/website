@@ -1,8 +1,5 @@
 module.exports = {
   reactStrictMode: true,
-  images: {
-    domains: ['tailwindui.com'],
-  },
   async rewrites() {
     return [
       {

@@ -32,7 +32,6 @@
     "eslint-config-next": "^13.1.0",
     "eslint-config-prettier": "^8.5.0",
     "gray-matter": "^4.0.3",
-    "marked": "^4.2.12",
     "next": "^13.1.0",
     "prettier": "^2.8.1",
     "react": "^18.2.0",
@@ -47,8 +46,5 @@
     "last 1 version",
     "> 1%",
     "not dead"
-  ],
-  "devDependencies": {
-    "@types/marked": "^4.0.8"
-  }
+  ]
 }

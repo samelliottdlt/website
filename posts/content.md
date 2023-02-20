@@ -1,7 +1,7 @@
 ---
-title: 'Test Post'
-date: '2023-02-19'
-description: 'This is a sample post that demonstrates all the different Markdown styles.'
+title: "Test Post"
+date: "2023-02-19"
+description: "This is a sample post that demonstrates all the different Markdown styles."
 ---
 
 # Sample Markdown Post
@@ -24,11 +24,11 @@ Here are some different headings:
 
 Here are some examples of emphasis:
 
-*This text will be italicized*
+_This text will be italicized_
 
 **This text will be bold**
 
-***This text will be bold and italicized***
+**_This text will be bold and italicized_**
 
 ## Lists
 

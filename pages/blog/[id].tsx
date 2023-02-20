@@ -18,7 +18,9 @@ interface Params extends ParsedUrlQuery {
   id: string;
 }
 
-export const getStaticProps: GetStaticProps<StaticProps, Params> = async ({ params }: GetStaticPropsContext<Params>) => {
+export const getStaticProps: GetStaticProps<StaticProps, Params> = async ({
+  params,
+}: GetStaticPropsContext<Params>) => {
   const post = await parsePost(params!.id);
   return {
     props: {
@@ -37,5 +39,5 @@ export default function Post({ post }: StaticProps) {
         <div dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
       </div>
     </div>
-  )
+  );
 }

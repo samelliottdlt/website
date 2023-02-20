@@ -3,7 +3,7 @@ import type { AppProps } from "next/app";
 import { Inter } from "@next/font/google";
 import Navbar from "../components/Navbar";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

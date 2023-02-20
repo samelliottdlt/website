@@ -1,25 +1,25 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import { remark } from 'remark';
-import html from 'remark-html';
+import fs from "fs";
+import path from "path";
+import matter from "gray-matter";
+import { remark } from "remark";
+import html from "remark-html";
 
-const postsDirectory = path.join(process.cwd(), 'posts');
+const postsDirectory = path.join(process.cwd(), "posts");
 
 export type Post = {
   id: string;
   date: string;
   title: string;
   description: string;
-}
+};
 
 export function getSortedPostsData(): Post[] {
   // Get file names under /posts
   const fileNames = fs.readdirSync(postsDirectory);
   const allPostsData: Post[] = fileNames.map((fileName) => {
-    const id = fileName.replace(/\.md$/, '');
+    const id = fileName.replace(/\.md$/, "");
     const fullPath = path.join(postsDirectory, fileName);
-    const fileContents = fs.readFileSync(fullPath, 'utf8');
+    const fileContents = fs.readFileSync(fullPath, "utf8");
     const matterResult = matter(fileContents);
 
     return {
@@ -45,10 +45,10 @@ export interface PostData {
 }
 
 export async function parsePost(id: string): Promise<PostData> {
-  const fs = require('fs');
-  const path = require('path');
-  const markdownPath = path.join(process.cwd(), 'posts', `${id}.md`);
-  const markdownContent = fs.readFileSync(markdownPath, 'utf-8');
+  const fs = require("fs");
+  const path = require("path");
+  const markdownPath = path.join(process.cwd(), "posts", `${id}.md`);
+  const markdownContent = fs.readFileSync(markdownPath, "utf-8");
 
   // Use gray-matter to parse the post metadata section
   const matterResult = matter(markdownContent);
@@ -73,7 +73,7 @@ export function getAllPostIds() {
   return fileNames.map((fileName) => {
     return {
       params: {
-        id: fileName.replace(/\.md$/, ''),
+        id: fileName.replace(/\.md$/, ""),
       },
     };
   });

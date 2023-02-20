@@ -74,7 +74,7 @@ Here's an example of inline code:
 
 Here's an example of a code block:
 
-```javascript
+```js
 function add(a, b) {
   return a + b;
 }
@@ -89,6 +89,10 @@ Here's an example of a blockquote:
 ## Horizontal Rule
 
 Here's an example of a horizontal rule:
+
+A youtube video:
+
+https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
 ---
 

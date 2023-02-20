@@ -1,8 +1,15 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { remark } from "remark";
-import html from "remark-html";
+import { unified } from "unified";
+import rehypeHighlight from "rehype-highlight";
+import remarkParse from "remark-parse";
+// package has no typings, just ignore
+// @ts-ignore
+import remarkOembed from "remark-oembed";
+import remarkRehype from "remark-rehype";
+import rehypeRaw from "rehype-raw";
+import rehypeStringify from "rehype-stringify";
 
 const postsDirectory = path.join(process.cwd(), "posts");
 
@@ -50,12 +57,15 @@ export async function parsePost(id: string): Promise<PostData> {
   const markdownPath = path.join(process.cwd(), "posts", `${id}.md`);
   const markdownContent = fs.readFileSync(markdownPath, "utf-8");
 
-  // Use gray-matter to parse the post metadata section
   const matterResult = matter(markdownContent);
 
-  // Use remark to convert markdown into HTML string
-  const processedContent = await remark()
-    .use(html)
+  const processedContent = await unified()
+    .use(remarkParse)
+    .use(remarkOembed)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)
+    .use(rehypeHighlight)
+    .use(rehypeStringify)
     .process(matterResult.content);
 
   const contentHtml = processedContent.toString();

@@ -1,6 +1,7 @@
 import { GetStaticProps, GetStaticPropsContext } from "next";
 import { ParsedUrlQuery } from "node:querystring";
 import { getAllPostIds, parsePost, PostData } from "../../lib/posts";
+import "@highlightjs/cdn-assets/styles/default.min.css";
 
 interface StaticProps {
   post: PostData;

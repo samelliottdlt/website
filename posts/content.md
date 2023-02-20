@@ -90,10 +90,10 @@ Here's an example of a blockquote:
 
 Here's an example of a horizontal rule:
 
+---
+
 A youtube video:
 
 https://www.youtube.com/watch?v=dQw4w9WgXcQ
-
----
 
 That's it! This post covers all the different Markdown styles.

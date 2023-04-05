@@ -2,8 +2,8 @@ import {
   createCardMap,
   findFusionPaths,
   createHandWithIds,
-} from "./";
-import json from "./card.json";
+} from "../pages/fusion-calculator";
+import json from "../pages/fusion-calculator/card.json";
 
 const cardMap = createCardMap(json);
 

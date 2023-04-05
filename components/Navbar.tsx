@@ -5,7 +5,7 @@ import Image from "next/image";
 const navigation = [
   { name: "Blog", href: "/blog", current: true },
   { name: "Pixel Art", href: "#", current: false },
-  { name: "Beluga", href: "#", current: false },
+  { name: "Beluga", href: "/beluga", current: false },
   { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
 ];
 

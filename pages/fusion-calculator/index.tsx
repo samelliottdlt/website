@@ -1,3 +1,8 @@
+import { useMemo } from "react";
+import cards from "./card.json";
+import { useState } from "react";
+import Fuse from "fuse.js";
+
 interface Fusion {
   _card1: number;
   _card2: number;
@@ -50,7 +55,7 @@ export function findNewInstanceOfCardById(
 }
 
 export function createHandWithIds(ids: number[], cardMap: CardsMappedById) {
-  return ids.map(id => findNewInstanceOfCardById(id, cardMap));
+  return ids.map((id) => findNewInstanceOfCardById(id, cardMap));
 }
 
 export function createCardMap(cards: Card[]): CardsMappedById {
@@ -143,6 +148,102 @@ export function findFusionPaths(
   return result;
 }
 
-function calculator() {}
+function Calculator() {
+  // const graph = useMemo(() => {
+  //   const cardMap = createCardMap(cards);
+  //   createFusionGraph(cards, cardMap)
+  // }, []);
 
-export default calculator;
+  const [results, setResults] = useState<Card[]>([cards[0]]);
+  const [hand, setHand] = useState<Card[]>([
+    cards[0],
+    cards[1],
+    cards[2],
+    cards[3],
+    cards[4],
+  ]);
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div className="m-5">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium leading-6 text-gray-900"
+        >
+          Search
+        </label>
+        <div className="mt-2">
+          <input
+            type="search"
+            name="search"
+            id="search"
+            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            placeholder="Celtic Guardian"
+            onChange={(e) => {
+              const search = e.target.value;
+              const fuse = new Fuse(cards, {
+                keys: ["Name"],
+              });
+              const results = fuse
+                .search(search, { limit: 5 })
+                .map((r) => r.item);
+              setResults(results);
+            }}
+          />
+        </div>
+        <ul role="list" className="divide-y divide-gray-200">
+          {results.length > 0 ? (
+            results.map((result) => (
+              <li
+                key={result.Id}
+                className="flex py-4 hover:bg-gray-200 transition-colors duration-200"
+              >
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-900">
+                    {result.Name}
+                  </p>
+                  <p className="text-sm text-gray-500">{result.Description}</p>
+                </div>
+              </li>
+            ))
+          ) : (
+            <li className="flex py-4 items-center justify-center">
+              <p className="text-sm text-gray-500">
+                No results found. Please try a different search.
+              </p>
+            </li>
+          )}
+        </ul>
+      </div>
+      <div className="m-5">
+        <div>
+          <div className="mt-6 flow-root">
+            <ul role="list" className="-my-5 divide-y divide-gray-200">
+              {hand.map((card) => (
+                <li key={card.Id} className="py-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-900">
+                        {card.Name}
+                      </p>
+                      <p className="truncate text-sm text-gray-500">
+                        {card.Description}
+                      </p>
+                    </div>
+                    <div>
+                      <a className="cursor-pointer hover:bg-red-500 inline-flex items-center rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300">
+                        Remove
+                      </a>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Calculator;

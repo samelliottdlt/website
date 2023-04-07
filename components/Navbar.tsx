@@ -1,12 +1,12 @@
-import { Fragment } from "react";
-import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Disclosure } from "@headlessui/react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
 const navigation = [
   { name: "Blog", href: "/blog", current: true },
   { name: "Pixel Art", href: "#", current: false },
-  { name: "Beluga", href: "#", current: false },
+  { name: "Beluga", href: "/beluga", current: false },
+  { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
 ];
 
 function classNames(...classes: string[]) {

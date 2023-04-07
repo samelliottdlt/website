@@ -134,9 +134,17 @@ export function findFusionPaths(
   return result;
 }
 
-let pathCounter = 0
+let pathCounter = 0;
 function formatPath(path: Card[]) {
-  const colors = ['bg-red-500', 'bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500'];
+  const colors = [
+    "bg-red-500",
+    "bg-green-500",
+    "bg-blue-500",
+    "bg-yellow-500",
+    "bg-indigo-500",
+    "bg-purple-500",
+    "bg-pink-500",
+  ];
 
   const getColor = (index: number) => {
     return colors[index % colors.length];
@@ -146,16 +154,23 @@ function formatPath(path: Card[]) {
     <span key={pathCounter++}>
       <span className="inline-flex items-center space-x-2 ml-2 mr-4">
         <span className="text-indigo-500">Attack:</span>
-        <span className="font-bold text-indigo-800">{path[path.length - 1].Attack}</span>
+        <span className="font-bold text-indigo-800">
+          {path[path.length - 1].Attack}
+        </span>
       </span>
       <span className="inline-flex items-center space-x-2 mr-4">
         <span className="text-green-500">Defense:</span>
-        <span className="font-bold text-green-800">{path[path.length - 1].Defense}</span>
+        <span className="font-bold text-green-800">
+          {path[path.length - 1].Defense}
+        </span>
       </span>
       {path[0].Name}
       <span
-        className={`inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white rounded-full ${getColor(0)} ml-1`}
-        style={{ verticalAlign: 'super', lineHeight: 1 }}>
+        className={`inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white rounded-full ${getColor(
+          0
+        )} ml-1`}
+        style={{ verticalAlign: "super", lineHeight: 1 }}
+      >
         1
       </span>
     </span>,
@@ -163,18 +178,17 @@ function formatPath(path: Card[]) {
   let cardCount = 2;
   for (let i = 1; i < path.length; i++) {
     if (i % 2 === 0) {
-      result.push(
-        <span key={pathCounter++}>
-          {`-> ${path[i].Name}`}
-        </span>
-      );
+      result.push(<span key={pathCounter++}>{`-> ${path[i].Name}`}</span>);
     } else {
       result.push(
         <span key={pathCounter++}>
           {`+ ${path[i].Name}`}
           <span
-            className={`inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white rounded-full ${getColor(i)} ml-1`}
-            style={{ verticalAlign: 'super', lineHeight: 1 }}>
+            className={`inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white rounded-full ${getColor(
+              i
+            )} ml-1`}
+            style={{ verticalAlign: "super", lineHeight: 1 }}
+          >
             {cardCount++}
           </span>
         </span>
@@ -240,13 +254,13 @@ function Calculator() {
     return findFusionPaths(hand, cards, cardMap, graph)
       .map((path) => {
         return path.map((card) => {
-          return findNewInstanceOfCardById(card.Id, cardMap)
+          return findNewInstanceOfCardById(card.Id, cardMap);
         });
       })
       .sort((a, b) => {
         return b[b.length - 1].Attack - a[a.length - 1].Attack;
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hand]);
   const [results, setResults] = useState<Card[]>([
     cards[0],
@@ -367,25 +381,29 @@ function Calculator() {
                               {card.Name}
                             </p>
                             <div className="space-y-2">
-                            {card.Fusions
-                              .filter((_i, index) => index < 4)
-                              .map(fusion => findNewInstanceOfCardById(fusion._card2, cardMap))
-                              .map((otherMaterial) => (
-                                <button
-                                  disabled={hand.length > 4}
-                                  key={otherMaterial.idCounter}
-                                  onClick={() => {
+                              {card.Fusions.filter((_i, index) => index < 4)
+                                .map((fusion) =>
+                                  findNewInstanceOfCardById(
+                                    fusion._card2,
+                                    cardMap
+                                  )
+                                )
+                                .map((otherMaterial) => (
+                                  <button
+                                    disabled={hand.length > 4}
+                                    key={otherMaterial.idCounter}
+                                    onClick={() => {
                                       setHand((prevHand) => [
                                         ...prevHand,
                                         otherMaterial,
                                       ]);
-                                  }}
-                                  className="truncate text-sm text-gray-500 hover:bg-blue-200 px-2 py-1 rounded"
-                                >
-                                  {otherMaterial.Name}
-                                </button>
-                              ))}
-                              </div>
+                                    }}
+                                    className="truncate text-sm text-gray-500 hover:bg-blue-200 px-2 py-1 rounded"
+                                  >
+                                    {otherMaterial.Name}
+                                  </button>
+                                ))}
+                            </div>
                           </div>
                           <div>
                             <a
@@ -426,32 +444,33 @@ function Calculator() {
         </div>
       </div>
       <ul role="list" className="space-y-3">
-      {paths.map((path) => (
-        <li key={pathCounter++} className="overflow-hidden rounded-md bg-white px-6 py-4 shadow">
-          <span className="text-sm font-medium text-gray-900">
-            {formatPath(path)}
-            {path[path.length - 1].Fusions
-              .filter((_i, index) => index < 4)
-              .map(fusion => findNewInstanceOfCardById(fusion._card2, cardMap))
-              .map((otherMaterial) => (
-                <button
-                  disabled={hand.length > 4}
-                  key={otherMaterial.idCounter}
-                  onClick={() => {
-                      setHand((prevHand) => [
-                        ...prevHand,
-                        otherMaterial,
-                      ]);
-                  }}
-                  className="m-1 truncate text-sm text-gray-500 hover:bg-blue-200 px-2 py-1 rounded"
-                >
-                  {otherMaterial.Name}
-                </button>
-              ))}
-          </span>
-        </li>
-      ))}
-    </ul>
+        {paths.map((path) => (
+          <li
+            key={pathCounter++}
+            className="overflow-hidden rounded-md bg-white px-6 py-4 shadow"
+          >
+            <span className="text-sm font-medium text-gray-900">
+              {formatPath(path)}
+              {path[path.length - 1].Fusions.filter((_i, index) => index < 4)
+                .map((fusion) =>
+                  findNewInstanceOfCardById(fusion._card2, cardMap)
+                )
+                .map((otherMaterial) => (
+                  <button
+                    disabled={hand.length > 4}
+                    key={otherMaterial.idCounter}
+                    onClick={() => {
+                      setHand((prevHand) => [...prevHand, otherMaterial]);
+                    }}
+                    className="m-1 truncate text-sm text-gray-500 hover:bg-blue-200 px-2 py-1 rounded"
+                  >
+                    {otherMaterial.Name}
+                  </button>
+                ))}
+            </span>
+          </li>
+        ))}
+      </ul>
     </>
   );
 }

@@ -27,7 +27,6 @@
     "@headlessui/react": "^1.7.14",
     "@heroicons/react": "^2.0.17",
     "@highlightjs/cdn-assets": "^11.8.0",
-    "@next/font": "^13.3.2",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@types/jest": "^29.5.1",
     "@types/node": "18.16.3",

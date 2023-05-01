@@ -1,46 +1,102 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef, useState } from "react";
-import { Vector3 } from "three";
+import { CanvasTexture, Vector3, LinearFilter, MeshStandardMaterial, SphereGeometry } from "three";
 import { Perf } from "r3f-perf";
 import { PerspectiveCamera } from "@react-three/drei";
 
-const flare0Path = "textures/lensflare/lensflare0.png";
-const flare3Path = "textures/lensflare/lensflare3.png";
+type GradientBackgroundProps = {
+  from: string;
+  to: string;
+}
+function GradientBackground({ from, to }: GradientBackgroundProps) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    const gradient = context!.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, from);
+    gradient.addColorStop(1, to);
+    context!.fillStyle = gradient;
+    context!.fillRect(0, 0, canvas.width, canvas.height);
+
+    const texture = new CanvasTexture(canvas);
+    texture.minFilter = LinearFilter;
+    return texture;
+  }, [from, to]);
+
+  return (
+    <mesh position={[0, 0, -25]} scale={[100, 100, 1]}>
+      <planeGeometry />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  );
+};
 
 function DroneWithLight(props: any) {
-  const [active, setActive] = useState(false);
   const meshRef = useRef<THREE.Mesh>(null);
-
-  const randomOffset = useMemo(() => {
-    return {
-      x: Math.random() * 2 - 1,
-      y: Math.random() * 2 - 1,
-    };
-  }, []);
-
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (meshRef.current) {
-      const time = clock.getElapsedTime();
-      meshRef.current.position.y +=
-        0.01 *
-        Math.sin(time * 0.5 + randomOffset.y) *
-        Math.cos(time * 0.5 + randomOffset.y);
-      meshRef.current.position.x +=
-        0.01 *
-        Math.cos(time * 0.5 + randomOffset.x) *
-        Math.sin(time * 0.5 + randomOffset.x);
+      const shakeMagnitude = 0.005;
+  
+      // Calculate shake offsets
+      const xOffset = shakeMagnitude * (Math.random() * 2 - 1);
+      const yOffset = shakeMagnitude * (Math.random() * 2 - 1);
+      const zOffset = shakeMagnitude * (Math.random() * 2 - 1);
+  
+      // Apply the shake offsets to the initial position
+      meshRef.current.position.set(
+        props.position[0] + xOffset,
+        props.position[1] + yOffset,
+        props.position[2] + zOffset
+      );
+    }
+  });
+
+  const [hovered, setHovered] = useState(false);
+  const [active, setActive] = useState(true);
+
+  const emissiveMaterial = useMemo(() => {
+    const material = new MeshStandardMaterial({
+      color: "darkblue",
+      emissive: active ? "cyan" : "black",
+      emissiveIntensity: active ? 0.5 : 0,
+    });
+    return material;
+  }, [active]);
+
+  useFrame(() => {
+    if (hovered && meshRef.current) {
+      // Set the emissive color and intensity on hover
+      // @ts-ignore
+      meshRef.current.material.emissive.set("white");
+      // @ts-ignore
+      meshRef.current.material.emissiveIntensity = 1;
+    } else if (!hovered && meshRef.current) {
+      // Reset the emissive color and intensity when not hovered
+      // @ts-ignore
+      meshRef.current.material.emissive.set(active ? "cyan" : "black");
+      // @ts-ignore
+      meshRef.current.material.emissiveIntensity = active ? 0.5 : 0;
+    }
+  });
+
+  const lineRef = useRef<THREE.LineSegments>(null);
+  useFrame(() => {
+    if (meshRef.current && hovered && lineRef.current) {
+        // Set the position of the lineSegments to match the sphere's position
+        lineRef.current.position.copy(meshRef.current.position);
     }
   });
 
   return (
-    <group {...props} onClick={() => setActive(!active)}>
+    <group
+      {...props}
+      onClick={() => setActive(!active)}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
       <mesh ref={meshRef}>
         <sphereGeometry args={[0.4, 32, 32]} />
-        <meshStandardMaterial
-          color={active ? "hotpink" : "#000000"}
-          emissive={active ? "hotpink" : "#00FFFF"}
-          emissiveIntensity={2}
-        />
+        <primitive object={emissiveMaterial} />
       </mesh>
     </group>
   );
@@ -117,22 +173,7 @@ const DroneArt: React.FC = () => {
           {dronePositions.map((position, index) => (
             <DroneWithLight key={index} position={position} />
           ))}
-          {/* <FlyControls
-          movementSpeed={10}
-          rollSpeed={0.1}
-          dragToLook
-          autoForward={false}
-        /> */}
-
-          {/* This is package is currenly bugged with the latest version of three
-          <EffectComposer>
-            <DepthOfField
-              focusDistance={10}
-              focalLength={0.01}
-              bokehScale={2}
-              height={480}
-            />
-          </EffectComposer> */}
+          <GradientBackground from="#000000" to="#061c87" />
           <Perf />
         </Canvas>
       </div>

@@ -133,16 +133,16 @@ function generatePositions(count: number, xRange: number, yRange: number) {
   return positions;
 }
 
-function circleAnimation(initialPosition: Vector3, elapsedTime: number) {
-  const radius = 2;
-  const angularSpeed = Math.PI * 0.5; // Half a circle per second
-  const angle = elapsedTime * angularSpeed;
+// function circleAnimation(initialPosition: Vector3, elapsedTime: number) {
+//   const radius = 2;
+//   const angularSpeed = Math.PI * 0.5; // Half a circle per second
+//   const angle = elapsedTime * angularSpeed;
 
-  const x = initialPosition.x + radius * Math.cos(angle);
-  const y = initialPosition.y + radius * Math.sin(angle);
+//   const x = initialPosition.x + radius * Math.cos(angle);
+//   const y = initialPosition.y + radius * Math.sin(angle);
 
-  return new Vector3(x, y, initialPosition.z);
-}
+//   return new Vector3(x, y, initialPosition.z);
+// }
 
 function sineWaveAnimation(initialPosition: Vector3, elapsedTime: number) {
   const amplitudeY = 1.5;

@@ -1,8 +1,7 @@
-import { useMemo, Fragment, useEffect } from "react";
+import { useMemo, Fragment } from "react";
 import { useState } from "react";
 import Fuse from "fuse.js";
 import { Transition } from "@headlessui/react";
-import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import cards from "./card.json";
 import Alert from "../../components/Alert";
 
@@ -24,7 +23,7 @@ interface Card {
   Defense: number;
   Stars: number;
   CardCode: string;
-  Equip: any;
+  Equip: unknown;
   Fusions: Fusion[];
   // will only exist on New Instances of Cards. Useful for cards
   idCounter?: number;
@@ -39,10 +38,6 @@ type NodeMap = Map<Card, Node>;
 type Edges = Map<Card, Card>;
 
 type CardsMappedById = Map<number, Card>;
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 function findCardById(id: number, map: CardsMappedById): Card {
   return map.get(id)!;

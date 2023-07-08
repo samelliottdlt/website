@@ -1,12 +1,13 @@
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
-const navigation = [
-  { name: "Blog", href: "/blog", current: true },
-  { name: "Pixel Art", href: "#", current: false },
+const defaultNavigation = [
+  { name: "Blog", href: "/blog", current: false },
   { name: "Beluga", href: "/beluga", current: false },
   { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
+  { name: "Drone Art", href: "/drone-art", current: false },
 ];
 
 function classNames(...classes: string[]) {
@@ -14,6 +15,19 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
+  const [navigation, setNavigation] = useState(defaultNavigation);
+
+  useEffect(() => {
+    const updatedNavigation = defaultNavigation.map((item) => {
+      const slug = window.location.pathname.split("/")[1];
+      if (slug === item.href.split("/")[1]) {
+        return { ...item, current: true };
+      }
+      return item;
+    });
+    setNavigation(updatedNavigation);
+  }, []);
+
   return (
     <Disclosure as="nav" className="bg-gray-800">
       {({ open }) => (

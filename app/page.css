@@ -1,7 +1,13 @@
 @keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .home-container {
@@ -12,7 +18,14 @@
   text-align: center;
   color: white;
   background-size: 200% 200%;
-  background-image: linear-gradient(45deg, #ff9a9e, #fad0c4, #ffd1ff, #a1c4fd, #12c2e9);
+  background-image: linear-gradient(
+    45deg,
+    #ff9a9e,
+    #fad0c4,
+    #ffd1ff,
+    #a1c4fd,
+    #12c2e9
+  );
   animation: gradient 10s ease infinite;
 }
 

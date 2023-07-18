@@ -6,7 +6,14 @@ import Fuse from "fuse.js";
 import { Transition } from "@headlessui/react";
 import cards from "./card.json";
 import Alert from "../../components/Alert";
-import { Card, findNewInstanceOfCardById, createCardMap, createFusionGraph, createHandWithIds, findFusionPaths } from "./util";
+import {
+  Card,
+  findNewInstanceOfCardById,
+  createCardMap,
+  createFusionGraph,
+  createHandWithIds,
+  findFusionPaths,
+} from "./util";
 
 let pathCounter = 0;
 function formatPath(path: Card[]) {

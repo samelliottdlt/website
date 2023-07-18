@@ -1,7 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRef } from "react";
-import Terminal from "./components/Terminal";
 
 interface TerminalHandle {
   write: (text: string) => void;
@@ -9,6 +9,9 @@ interface TerminalHandle {
 
 function Game() {
   const terminalRef = useRef<TerminalHandle>();
+  const Terminal = dynamic(() => import("./components/Terminal"), {
+    ssr: false,
+  });
 
   const handleClick = () => {
     terminalRef.current?.write("Button clicked\n");

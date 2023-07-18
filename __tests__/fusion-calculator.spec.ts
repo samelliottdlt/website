@@ -3,7 +3,7 @@ import {
   findFusionPaths,
   createHandWithIds,
 } from "../app/fusion-calculator/util";
-import json from "../pages/fusion-calculator/card.json";
+import json from "../app/fusion-calculator/card.json";
 
 const cardMap = createCardMap(json);
 

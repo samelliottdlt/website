@@ -57,6 +57,7 @@ export default function Navbar() {
                       alt="Chun-Li"
                       width={8}
                       height={8}
+                      quality={100}
                     />
                     <Image
                       className="hidden h-8 w-auto lg:block"
@@ -64,6 +65,7 @@ export default function Navbar() {
                       alt="Chun-Li"
                       width={8}
                       height={8}
+                      quality={100}
                     />
                   </Link>
                 </div>

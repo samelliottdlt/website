@@ -1,13 +1,20 @@
+"use client";
+
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef, useState } from "react";
-import { CanvasTexture, Vector3, LinearFilter, MeshStandardMaterial } from "three";
+import {
+  CanvasTexture,
+  Vector3,
+  LinearFilter,
+  MeshStandardMaterial,
+} from "three";
 import { Perf } from "r3f-perf";
 import { PerspectiveCamera } from "@react-three/drei";
 
 type GradientBackgroundProps = {
   from: string;
   to: string;
-}
+};
 function GradientBackground({ from, to }: GradientBackgroundProps) {
   const texture = useMemo(() => {
     const canvas = document.createElement("canvas");
@@ -31,13 +38,16 @@ function GradientBackground({ from, to }: GradientBackgroundProps) {
   );
 }
 
-
 type DroneWithLightProps = {
   position: [number, number, number];
   animation?: (initialPosition: Vector3, elapsedTime: number) => Vector3;
   addShake?: boolean;
 };
-function DroneWithLight({ position, animation, addShake = true }: DroneWithLightProps) {
+function DroneWithLight({
+  position,
+  animation,
+  addShake = true,
+}: DroneWithLightProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const initialPosition = useMemo(() => new Vector3(...position), [position]);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -45,28 +55,27 @@ function DroneWithLight({ position, animation, addShake = true }: DroneWithLight
   useFrame((state, delta) => {
     if (meshRef.current) {
       setElapsedTime((prevElapsedTime) => prevElapsedTime + delta);
-  
+
       // Apply custom animation
       if (animation) {
         const newPosition = animation(initialPosition, elapsedTime);
-  
+
         if (addShake) {
           const shakeMagnitude = 0.005;
-  
+
           const xOffset = shakeMagnitude * (Math.random() * 2 - 1);
           const yOffset = shakeMagnitude * (Math.random() * 2 - 1);
           const zOffset = shakeMagnitude * (Math.random() * 2 - 1);
-  
+
           newPosition.x += xOffset;
           newPosition.y += yOffset;
           newPosition.z += zOffset;
         }
-  
+
         meshRef.current.position.copy(newPosition);
       }
     }
   });
-  
 
   const [hovered, setHovered] = useState(false);
   const [active, setActive] = useState(true);
@@ -99,8 +108,8 @@ function DroneWithLight({ position, animation, addShake = true }: DroneWithLight
   const lineRef = useRef<THREE.LineSegments>(null);
   useFrame(() => {
     if (meshRef.current && hovered && lineRef.current) {
-        // Set the position of the lineSegments to match the sphere's position
-        lineRef.current.position.copy(meshRef.current.position);
+      // Set the position of the lineSegments to match the sphere's position
+      lineRef.current.position.copy(meshRef.current.position);
     }
   });
 
@@ -150,8 +159,12 @@ function sineWaveAnimation(initialPosition: Vector3, elapsedTime: number) {
   const frequency = 0.5;
   const speed = 0.2;
 
-  const x = initialPosition.x + amplitudeX * Math.sin(elapsedTime * speed * 2 * Math.PI);
-  const y = initialPosition.y + amplitudeY * Math.sin(frequency * elapsedTime * 2 * Math.PI);
+  const x =
+    initialPosition.x +
+    amplitudeX * Math.sin(elapsedTime * speed * 2 * Math.PI);
+  const y =
+    initialPosition.y +
+    amplitudeY * Math.sin(frequency * elapsedTime * 2 * Math.PI);
 
   return new Vector3(x, y, initialPosition.z);
 }
@@ -163,7 +176,7 @@ const DroneArt: React.FC = () => {
 
   const dronePositions = useMemo(
     () => generatePositions(droneCount, xRange, yRange),
-    [droneCount, xRange, yRange]
+    [droneCount, xRange, yRange],
   );
 
   // Calculate the center of the grid.
@@ -175,26 +188,25 @@ const DroneArt: React.FC = () => {
         acc.z += pos[2];
         return acc;
       },
-      { x: 0, y: 0, z: 0 }
+      { x: 0, y: 0, z: 0 },
     );
 
     return new Vector3(
       sum.x / dronePositions.length,
       sum.y / dronePositions.length,
-      sum.z / dronePositions.length
+      sum.z / dronePositions.length,
     );
   }, [dronePositions]);
-
 
   // Set the camera's initial position in front of the grid.
   const cameraStartPosition = useMemo(() => {
     return new Vector3(
       centerPosition.x,
       centerPosition.y,
-      centerPosition.z + 30
+      centerPosition.z + 30,
     );
   }, [centerPosition]);
-  
+
   return (
     <div>
       <h1 className="m-5">Drone Art</h1>
@@ -212,7 +224,12 @@ const DroneArt: React.FC = () => {
           />
           <ambientLight intensity={0.5} />
           {dronePositions.map((position, index) => (
-            <DroneWithLight key={index} position={position} animation={sineWaveAnimation} addShake/>
+            <DroneWithLight
+              key={index}
+              position={position}
+              animation={sineWaveAnimation}
+              addShake
+            />
           ))}
           <GradientBackground from="#000000" to="#061c87" />
           <Perf />

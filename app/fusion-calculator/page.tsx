@@ -1,133 +1,12 @@
+"use client";
+
 import { useMemo, Fragment } from "react";
 import { useState } from "react";
 import Fuse from "fuse.js";
 import { Transition } from "@headlessui/react";
 import cards from "./card.json";
 import Alert from "../../components/Alert";
-
-interface Fusion {
-  _card1: number;
-  _card2: number;
-  _result: number;
-}
-
-interface Card {
-  Name: string;
-  Description: string;
-  Id: number;
-  GuardianStarA: number;
-  GuardianStarB: number;
-  Level: number;
-  Type: number;
-  Attack: number;
-  Defense: number;
-  Stars: number;
-  CardCode: string;
-  Equip: unknown;
-  Fusions: Fusion[];
-  // will only exist on New Instances of Cards. Useful for cards
-  idCounter?: number;
-}
-
-type Node = {
-  value: Card;
-  edges: Edges;
-};
-type NodeMap = Map<Card, Node>;
-// fusion material to fusion destination
-type Edges = Map<Card, Card>;
-
-type CardsMappedById = Map<number, Card>;
-
-function findCardById(id: number, map: CardsMappedById): Card {
-  return map.get(id)!;
-}
-
-let idCounter = 0;
-export function findNewInstanceOfCardById(
-  id: number,
-  map: CardsMappedById
-): Card {
-  const card = map.get(id)!;
-  return {
-    ...card,
-    idCounter: idCounter++,
-  };
-}
-
-export function createHandWithIds(ids: number[], cardMap: CardsMappedById) {
-  return ids.map((id) => findNewInstanceOfCardById(id, cardMap));
-}
-
-export function createCardMap(cards: Card[]): CardsMappedById {
-  const map = new Map<number, Card>();
-
-  cards.forEach((card) => {
-    map.set(card.Id, card);
-  });
-
-  return map;
-}
-
-export function createFusionGraph(cards: Card[], cardMap: CardsMappedById) {
-  const graph = new Set<Node>();
-  const nodeMap: NodeMap = new Map();
-
-  cards.forEach((card) => {
-    const edges: Edges = new Map();
-    const node: Node = {
-      value: findCardById(card.Id, cardMap),
-      edges,
-    };
-
-    graph.add(node);
-    nodeMap.set(card, node);
-  });
-
-  cards.forEach((c) => {
-    const card = findCardById(c.Id, cardMap);
-    card.Fusions.forEach((fusion) => {
-      const currentNode = nodeMap.get(card)!;
-      // edge from _card1 to destination
-      const fusionMaterial = findCardById(fusion._card2, cardMap!);
-      const destination = findCardById(fusion._result, cardMap!);
-      currentNode.edges.set(fusionMaterial, destination);
-
-      // edge from _card2 to destination
-      const otherNode = nodeMap.get(fusionMaterial)!;
-      otherNode.edges.set(findCardById(card.Id, cardMap), destination);
-    });
-  });
-
-  return nodeMap;
-}
-
-export function findFusionPaths(
-  hand: Card[],
-  cardsData: Card[],
-  cardMap: CardsMappedById,
-  nodeMap: NodeMap = createFusionGraph(cardsData, cardMap)
-) {
-  const result: Array<Card[]> = [];
-  const memo: Map<number, Card[][]> = new Map();
-
-  for (const handCard of hand) {
-    const card = findCardById(handCard.Id, cardMap);
-    const node = nodeMap.get(card)!;
-    const paths = findPathsFromNode(
-      node,
-      hand.filter((c) => c !== handCard),
-      nodeMap,
-      cardMap,
-      memo
-    );
-    for (const path of paths) {
-      result.push([handCard, ...path]);
-    }
-  }
-
-  return result;
-}
+import { Card, findNewInstanceOfCardById, createCardMap, createFusionGraph, createHandWithIds, findFusionPaths } from "./util";
 
 let pathCounter = 0;
 function formatPath(path: Card[]) {
@@ -162,7 +41,7 @@ function formatPath(path: Card[]) {
       {path[0].Name}
       <span
         className={`inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white rounded-full ${getColor(
-          0
+          0,
         )} ml-1`}
         style={{ verticalAlign: "super", lineHeight: 1 }}
       >
@@ -180,58 +59,16 @@ function formatPath(path: Card[]) {
           {`+ ${path[i].Name}`}
           <span
             className={`inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white rounded-full ${getColor(
-              i
+              i,
             )} ml-1`}
             style={{ verticalAlign: "super", lineHeight: 1 }}
           >
             {cardCount++}
           </span>
-        </span>
+        </span>,
       );
     }
   }
-  return result;
-}
-
-function findPathsFromNode(
-  node: Node,
-  availableHand: Card[],
-  nodeMap: NodeMap,
-  cardMap: CardsMappedById,
-  memo: Map<number, Card[][]>
-): Card[][] {
-  if (memo.has(node.value.Id)) {
-    return memo.get(node.value.Id)!;
-  }
-
-  const result: Card[][] = [];
-  const { edges } = node;
-
-  for (const nextCardHand of availableHand) {
-    const nextCard = findCardById(nextCardHand.Id, cardMap);
-    if (edges.has(nextCard)) {
-      const fusion = edges.get(nextCard)!;
-      const nextNode = nodeMap.get(fusion)!;
-      const nextAvailableHand = availableHand.filter((c) => c !== nextCardHand);
-      const paths = findPathsFromNode(
-        nextNode,
-        nextAvailableHand,
-        nodeMap,
-        cardMap,
-        memo
-      );
-
-      for (const path of paths) {
-        result.push([nextCardHand, fusion, ...path]);
-      }
-    }
-  }
-
-  if (result.length === 0) {
-    result.push([]);
-  }
-
-  memo.set(node.value.Id, result);
   return result;
 }
 
@@ -243,7 +80,7 @@ function Calculator() {
     return createFusionGraph(cards, cardMap);
   }, [cardMap]);
   const [hand, setHand] = useState<Card[]>(
-    createHandWithIds([1, 2, 3, 4, 5], cardMap)
+    createHandWithIds([1, 2, 3, 4, 5], cardMap),
   );
   const paths = useMemo(() => {
     return findFusionPaths(hand, cards, cardMap, graph)
@@ -380,8 +217,8 @@ function Calculator() {
                                 .map((fusion) =>
                                   findNewInstanceOfCardById(
                                     fusion._card2,
-                                    cardMap
-                                  )
+                                    cardMap,
+                                  ),
                                 )
                                 .map((otherMaterial) => (
                                   <button
@@ -407,13 +244,13 @@ function Calculator() {
                                 setTimeout(() => {
                                   setHand((hand) =>
                                     hand.filter(
-                                      (cardToRemove) => card !== cardToRemove
-                                    )
+                                      (cardToRemove) => card !== cardToRemove,
+                                    ),
                                   );
                                   setRemovingCards((prev) =>
                                     prev.filter(
-                                      (cardToRemove) => card !== cardToRemove
-                                    )
+                                      (cardToRemove) => card !== cardToRemove,
+                                    ),
                                   );
                                 }, 250);
                               }}
@@ -448,7 +285,7 @@ function Calculator() {
               {formatPath(path)}
               {path[path.length - 1].Fusions.filter((_i, index) => index < 4)
                 .map((fusion) =>
-                  findNewInstanceOfCardById(fusion._card2, cardMap)
+                  findNewInstanceOfCardById(fusion._card2, cardMap),
                 )
                 .map((otherMaterial) => (
                   <button

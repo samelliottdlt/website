@@ -55,17 +55,15 @@ export default function Navbar() {
                       className="block h-8 w-auto lg:hidden"
                       src="/chunli.webp"
                       alt="Chun-Li"
-                      width={8}
-                      height={8}
-                      quality={100}
+                      width={32}
+                      height={32}
                     />
                     <Image
                       className="hidden h-8 w-auto lg:block"
                       src="/chunli.webp"
                       alt="Chun-Li"
-                      width={8}
-                      height={8}
-                      quality={100}
+                      width={32}
+                      height={32}
                     />
                   </Link>
                 </div>

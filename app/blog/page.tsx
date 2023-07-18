@@ -1,20 +1,8 @@
-import { GetStaticProps } from "next";
-import { getSortedPostsData, Post } from "../../lib/posts";
+import { getSortedPostsData } from "../../lib/posts";
 
-interface StaticProps {
-  posts: Post[];
-}
-
-export const getStaticProps: GetStaticProps<StaticProps> = async () => {
-  const allPostsData = getSortedPostsData();
-  return {
-    props: {
-      posts: allPostsData,
-    },
-  };
-};
-
-const Blog: React.FC<StaticProps> = ({ posts }) => {
+function Blog({ params }: { params: { slug: string } }) {
+  const posts = getSortedPostsData();
+  console.log(params.slug);
   return (
     <div className="m-5">
       <ul role="list" className="divide-y divide-gray-200">
@@ -50,6 +38,6 @@ const Blog: React.FC<StaticProps> = ({ posts }) => {
       </ul>
     </div>
   );
-};
+}
 
 export default Blog;

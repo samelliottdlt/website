@@ -12,6 +12,7 @@ const defaultNavigation = [
   { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
   { name: "Drone Art", href: "/drone-art", current: false },
   { name: "Game", href: "/game", current: false },
+  { name: "GB Studio", href: "/gbstudio", current: false },
 ];
 
 function classNames(...classes: string[]) {

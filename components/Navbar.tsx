@@ -4,9 +4,10 @@ import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const defaultNavigation = [
+  { name: "About Me", href: "/about-me", current: false },
   { name: "Blog", href: "/blog", current: false },
   { name: "Beluga", href: "/beluga", current: false },
   { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
@@ -20,18 +21,12 @@ function classNames(...classes: string[]) {
 }
 
 export default function Navbar() {
-  const [navigation, setNavigation] = useState(defaultNavigation);
+  const pathName = usePathname();
 
-  useEffect(() => {
-    const updatedNavigation = defaultNavigation.map((item) => {
-      const slug = window.location.pathname.split("/")[1];
-      if (slug === item.href.split("/")[1]) {
-        return { ...item, current: true };
-      }
-      return item;
-    });
-    setNavigation(updatedNavigation);
-  }, []);
+  const navigation = defaultNavigation.map((item) => {
+    const current = pathName === item.href;
+    return { ...item, current };
+  });
 
   return (
     <Disclosure as="nav" className="bg-gray-800">

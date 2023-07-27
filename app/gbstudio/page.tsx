@@ -1,7 +1,27 @@
+"use client";
+
 import Script from "next/script";
+import { useEffect, useState } from "react";
 import "./page.css";
 
 function Page() {
+  const [binjgbLoaded, setBinjgbLoaded] = useState(false);
+
+  const handleLoad = () => {
+    setBinjgbLoaded(true);
+  };
+
+  useEffect(() => {
+    return () => {
+      // compiled script.js creates a global emulator object
+      // @ts-ignore
+      const emulator = window.emulator;
+      if (emulator !== undefined) {
+        emulator.stop();
+      }
+    };
+  }, []);
+
   return (
     <>
       <div id="game">
@@ -29,8 +49,14 @@ function Page() {
           A
         </div>
       </div>
-      <Script src="/gbstudio/binjgb.js" strategy="lazyOnload" />
-      <Script src="/gbstudio/script.js" strategy="lazyOnload" />
+      <Script
+        src="/gbstudio/binjgb.js"
+        strategy="lazyOnload"
+        onLoad={handleLoad}
+      />
+      {binjgbLoaded && (
+        <Script src="/gbstudio/script.js" strategy="lazyOnload" />
+      )}
     </>
   );
 }

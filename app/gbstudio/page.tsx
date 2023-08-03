@@ -1,7 +1,7 @@
 function Page() {
   return (
     <>
-      <iframe 
+      <iframe
         src="gbstudio-assets/index.html"
         title="GB Studio"
         className="h-screen w-screen"

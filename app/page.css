@@ -33,3 +33,9 @@
   font-size: 3em;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
+
+.kiki-silhouette {
+  width: 200px;
+  height: 200px;
+  margin-top: 20px;
+}

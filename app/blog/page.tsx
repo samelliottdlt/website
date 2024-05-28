@@ -1,4 +1,4 @@
-import { getSortedPostsData } from "../../lib/posts";
+import { getSortedPostsData } from "./parser";
 
 function Blog({ params }: { params: { slug: string } }) {
   const posts = getSortedPostsData();

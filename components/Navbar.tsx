@@ -5,16 +5,14 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { classNames } from "../lib/util";
 
 const defaultNavigation = [
   { name: "About Me", href: "/about-me", current: false },
   { name: "Blog", href: "/blog", current: false },
   { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
+  { name: "Backlog Tracker", href: "/backlog", current: false },
 ];
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export default function Navbar() {
   const pathName = usePathname();

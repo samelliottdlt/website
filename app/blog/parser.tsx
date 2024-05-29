@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { compileMDX } from 'next-mdx-remote/rsc';
-import rehypeHighlight from 'rehype-highlight';
+import { compileMDX } from "next-mdx-remote/rsc";
+import rehypeHighlight from "rehype-highlight";
 import YoutubeEmbed from "../../components/YoutubeEmbed";
 
 const postsDirectory = path.join(process.cwd(), "posts");
@@ -64,29 +64,25 @@ const components = {
   a: (props: object) => (
     <a className="text-blue-500 hover:underline" {...props} />
   ),
-  ul: (props: object) => (
-    <ul className="list-disc list-inside" {...props} />
-  ),
-  ol: (props: object) => (
-    <ol className="list-decimal list-inside" {...props} />
-  ),
-  li: (props: object) => (
-    <li className="my-1" {...props} />
-  ),
+  ul: (props: object) => <ul className="list-disc list-inside" {...props} />,
+  ol: (props: object) => <ol className="list-decimal list-inside" {...props} />,
+  li: (props: object) => <li className="my-1" {...props} />,
   YoutubeEmbed: (props: object) => <YoutubeEmbed {...props} />,
 };
 
-
 export async function parsePost(slug: string) {
   const fullPath = path.join(postsDirectory, `${slug}.mdx`);
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const fileContents = fs.readFileSync(fullPath, "utf8");
 
   const { content, frontmatter } = await compileMDX({
     source: fileContents,
     components,
-    options: { parseFrontmatter: true, mdxOptions: {
-      rehypePlugins: [rehypeHighlight],
-    }, },
+    options: {
+      parseFrontmatter: true,
+      mdxOptions: {
+        rehypePlugins: [rehypeHighlight],
+      },
+    },
   });
 
   return {

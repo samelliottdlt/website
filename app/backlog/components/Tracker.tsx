@@ -1,18 +1,22 @@
 "use client";
 
-import { useState } from 'react';
-import GameList from './GameList';
-import data from './games';
+import { useState } from "react";
+import GameList from "./GameList";
+import data from "./games";
 
 const BacklogTracker: React.FC = () => {
   const gamesData = data;
 
-  const [collapsedYears, setCollapsedYears] = useState<{ [year: string]: boolean }>(Object.keys(gamesData.played).reduce((accumulator, year) => {
-    return {
-      ...accumulator,
-      [year]: true,
-    }
-  }, {}));
+  const [collapsedYears, setCollapsedYears] = useState<{
+    [year: string]: boolean;
+  }>(
+    Object.keys(gamesData.played).reduce((accumulator, year) => {
+      return {
+        ...accumulator,
+        [year]: true,
+      };
+    }, {}),
+  );
 
   const toggleYear = (year: string) => {
     setCollapsedYears((prev) => ({
@@ -21,8 +25,12 @@ const BacklogTracker: React.FC = () => {
     }));
   };
 
-  const multiplayerGames = gamesData.current.filter((game) => game.type === 'multiplayer');
-  const singlePlayerGames = gamesData.current.filter((game) => game.type === 'singleplayer');
+  const multiplayerGames = gamesData.current.filter(
+    (game) => game.type === "multiplayer",
+  );
+  const singlePlayerGames = gamesData.current.filter(
+    (game) => game.type === "singleplayer",
+  );
 
   return (
     <div className="container mx-auto p-4">
@@ -31,7 +39,7 @@ const BacklogTracker: React.FC = () => {
         <GameList games={multiplayerGames} title="Multiplayer Games" />
         <GameList games={singlePlayerGames} title="Single Player Games" />
       </div>
-      <div className='text-2xl font-bold mb-4'>Completed</div>
+      <div className="text-2xl font-bold mb-4">Completed</div>
       {Object.entries(gamesData.played)
         .sort(([year1], [year2]) => Number(year2) - Number(year1))
         .map(([year, games]) => (
@@ -40,7 +48,7 @@ const BacklogTracker: React.FC = () => {
               className="cursor-pointer text-2xl font-bold mb-2"
               onClick={() => toggleYear(year)}
             >
-              {year} {collapsedYears[year] ? '▼' : '▲'}
+              {year} {collapsedYears[year] ? "▼" : "▲"}
             </div>
             {!collapsedYears[year] && <GameList games={games} />}
           </div>

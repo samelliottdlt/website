@@ -14,7 +14,10 @@ function Page() {
       </ul>
       <br />
       <p className="text-xl text-black mb-2">
-        You can reach me at: sdelatorrebaba (at) gmail (dot) com
+        You can reach me at: You can reach me at:{" "}
+        <a href="mailto:me@sdelatorrebaba.com" className="text-blue-400">
+          me@sdelatorrebaba.com
+        </a>
       </p>
     </div>
   );

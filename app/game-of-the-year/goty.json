@@ -1,0 +1,33 @@
+[
+  { 
+    "year": 2024, 
+    "title": "Astro Bot",
+    "description": "make platformers great again"
+  },
+  { 
+    "year": 2023, 
+    "title": "The Legend of Zelda: Tears of the Kingdom",
+    "description": "🐐",
+    "honorableMentions": [
+      {
+        "title": "Bayonetta Origins: Cereza and the Lost Demon",
+        "description": "My thumbs are sore"
+      }
+    ]
+  },
+  { 
+    "year": 2022, 
+    "title": "Elden Ring",
+    "description": "FOUL TARNISHED"
+  },
+  { 
+    "year": 2021, 
+    "title": "Metroid Dread",
+    "description": "2d 🐐"
+  },
+  { 
+    "year": 2020, 
+    "title": "Demon's Souls",
+    "description": "Still best looking game on PS5"
+  }
+]

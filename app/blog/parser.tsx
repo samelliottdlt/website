@@ -51,7 +51,8 @@ const components = {
   h4: (props: object) => <h4 className="text-xl font-bold" {...props} />,
   h5: (props: object) => <h5 className="text-lg font-bold" {...props} />,
   h6: (props: object) => <h6 className="text-base font-bold" {...props} />,
-  img: (props: object) => <img className="max-w-full h-auto" {...props} />,
+  // Using img element for MDX content where images come from markdown and need flexibility for external sources
+  img: (props: object) => <img className="max-w-full h-auto" {...props} />, // eslint-disable-line @next/next/no-img-element, jsx-a11y/alt-text
   blockquote: (props: object) => (
     <blockquote className="border-l-4 border-gray-500 pl-4 italic" {...props} />
   ),

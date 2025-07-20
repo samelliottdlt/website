@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Disclosure } from "@headlessui/react";
 import { ChevronUpIcon } from "@heroicons/react/20/solid";
 import smoothieData from "./ingredients.json";
@@ -11,18 +11,7 @@ const SmoothieCalculator: React.FC = () => {
     [string, (string | string[])[]][]
   >([]);
 
-  useEffect(() => {
-    calculatePossibleSmoothies();
-  }, [inventory]);
-
-  const toggleIngredient = (ingredient: string) => {
-    setInventory((prev) => ({
-      ...prev,
-      [ingredient]: !prev[ingredient],
-    }));
-  };
-
-  const calculatePossibleSmoothies = () => {
+  const calculatePossibleSmoothies = useCallback(() => {
     const availableIngredients = Object.keys(inventory).filter(
       (ing) => inventory[ing],
     );
@@ -37,6 +26,17 @@ const SmoothieCalculator: React.FC = () => {
       },
     );
     setPossibleSmoothies(possible);
+  }, [inventory]);
+
+  useEffect(() => {
+    calculatePossibleSmoothies();
+  }, [calculatePossibleSmoothies]);
+
+  const toggleIngredient = (ingredient: string) => {
+    setInventory((prev) => ({
+      ...prev,
+      [ingredient]: !prev[ingredient],
+    }));
   };
 
   const renderIngredient = (ingredient: string | string[]) => {

@@ -1,8 +1,9 @@
 import { parsePost } from "../parser";
 import "@highlightjs/cdn-assets/styles/github.min.css";
 
-async function Post({ params }: { params: { slug: string } }) {
-  const { content, frontmatter } = await parsePost(params.slug);
+async function Post({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const { content, frontmatter } = await parsePost(slug);
 
   return (
     <div className="m-5">

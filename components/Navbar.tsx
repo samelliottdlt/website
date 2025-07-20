@@ -11,7 +11,7 @@ const defaultNavigation = [
   { name: "About Me", href: "/about-me", current: false },
   { name: "Blog", href: "/blog", current: false },
   { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
-  { name: "Backlog Tracker", href: "/backlog", current: false },
+  { name: "Smoothie Calculator", href: "/smoothie-calculator", current: false },
 ];
 
 export default function Navbar() {
@@ -47,6 +47,7 @@ export default function Navbar() {
                       alt="Chun-Li"
                       width={32}
                       height={32}
+                      unoptimized
                     />
                     <Image
                       className="hidden h-8 w-auto lg:block"

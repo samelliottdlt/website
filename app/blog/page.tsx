@@ -1,8 +1,8 @@
 import { getSortedPostsData } from "./parser";
 
-function Blog({ params }: { params: { slug: string } }) {
+function Blog() {
   const posts = getSortedPostsData();
-  console.log(params.slug);
+
   return (
     <div className="m-5">
       <ul role="list" className="divide-y divide-gray-200">

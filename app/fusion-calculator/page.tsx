@@ -31,7 +31,7 @@ function formatPath(path: Card[]) {
     return colors[index % colors.length];
   };
 
-  const result: JSX.Element[] = [
+  const result = [
     <span key={pathCounter++}>
       <span className="inline-flex items-center space-x-2 ml-2 mr-4">
         <span className="text-indigo-500">Attack:</span>

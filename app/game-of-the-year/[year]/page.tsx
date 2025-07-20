@@ -7,9 +7,16 @@ import { notFound } from "next/navigation";
 export const dynamic = 'force-static'; // Force static generation
 export const revalidate = false; // Never revalidate (cache indefinitely)
 
+interface HonorableMention {
+  title: string;
+  description: string;
+}
+
 interface Entry {
   year: number;
   title: string;
+  description: string;
+  honorableMentions?: HonorableMention[];
 }
 
 interface GameData {

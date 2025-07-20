@@ -1,19 +1,25 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import { classNames } from "../../lib/util";
+
+interface HonorableMention {
+  title: string;
+  description: string;
+}
 
 interface Game {
   year: number;
   title: string;
+  description: string;
+  honorableMentions?: HonorableMention[];
   imageUrl?: string | null;
 }
 
 interface GameDisplayProps {
   game: Game;
-  allGames: { year: number; title: string }[];
+  allGames: { year: number; title: string; description: string; honorableMentions?: HonorableMention[] }[];
 }
 
 export default function GameDisplay({ game, allGames }: GameDisplayProps) {
@@ -63,13 +69,19 @@ export default function GameDisplay({ game, allGames }: GameDisplayProps) {
       </div>
       
       <div className="flex flex-col items-center space-y-4">
-        <div className="text-lg">
+        <div className="text-center">
           <p className={classNames(
-            "transition-opacity duration-200",
+            "text-lg transition-opacity duration-200",
             isPending ? "opacity-50" : "opacity-100"
           )}>
             <span className="font-semibold">{game.year}:</span>{" "}
             {game.title}
+          </p>
+          <p className={classNames(
+            "text-gray-600 mt-2 max-w-md mx-auto transition-opacity duration-200",
+            isPending ? "opacity-50" : "opacity-100"
+          )}>
+            {game.description}
           </p>
         </div>
         
@@ -98,6 +110,33 @@ export default function GameDisplay({ game, allGames }: GameDisplayProps) {
             </div>
           )}
         </div>
+        
+        {/* Honorable Mentions Section */}
+        {game.honorableMentions && game.honorableMentions.length > 0 && (
+          <div className={classNames(
+            "mt-8 max-w-4xl mx-auto transition-opacity duration-200",
+            isPending ? "opacity-50" : "opacity-100"
+          )}>
+            <h3 className="text-xl font-semibold text-indigo-600 mb-4 text-center">
+              Honorable Mentions
+            </h3>
+            <div className="flex flex-wrap justify-center gap-4">
+              {game.honorableMentions.map((mention, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-50 rounded-lg p-4 border border-gray-200 min-w-[280px] max-w-[320px] flex-shrink-0"
+                >
+                  <h4 className="font-medium text-gray-900 mb-1 text-center">
+                    {mention.title}
+                  </h4>
+                  <p className="text-sm text-gray-600 text-center">
+                    {mention.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

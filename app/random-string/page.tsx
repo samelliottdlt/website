@@ -14,13 +14,17 @@ function RandomStringGenerator() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialLength = Math.min(Number(searchParams.get("length")) || DEFAULT_LENGTH, MAX_LENGTH);
-  const [length, setLength] = useState(initialLength);
+  // Read initial values from URL params
+  const urlLength = Number(searchParams.get("length")) || DEFAULT_LENGTH;
+  const urlAllowOverLimit = searchParams.get("allowOverLimit") === "true";
+  
+  // Initialize states with URL values
+  const [length, setLength] = useState(urlLength);
   const [charset, setCharset] = useState(DEFAULT_CHARSET);
   const [result, setResult] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
-  const [allowOverLimit, setAllowOverLimit] = useState(false);
+  const [allowOverLimit, setAllowOverLimit] = useState(urlAllowOverLimit);
   
   const abortControllerRef = useRef<AbortController | null>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
@@ -132,10 +136,19 @@ function RandomStringGenerator() {
   }, [handleKeyDown]);
 
   useEffect(() => {
-    const params = new URLSearchParams(Array.from(searchParams.entries()));
-    params.set("length", length.toString());
-    router.replace(`?${params.toString()}`);
-  }, [length, router, searchParams]);
+    // Only update URL if values have actually changed from URL params
+    const currentUrlLength = Number(searchParams.get("length")) || DEFAULT_LENGTH;
+    const currentUrlAllowOverLimit = searchParams.get("allowOverLimit") === "true";
+    
+    if (length !== currentUrlLength || allowOverLimit !== currentUrlAllowOverLimit) {
+      const params = new URLSearchParams();
+      params.set("length", length.toString());
+      if (allowOverLimit) {
+        params.set("allowOverLimit", "true");
+      }
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [length, allowOverLimit, router, searchParams]);
 
   return (
     <div className="p-4 max-w-2xl mx-auto">

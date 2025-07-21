@@ -13,6 +13,7 @@ const defaultNavigation = [
   { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
   { name: "Smoothie Calculator", href: "/smoothie-calculator", current: false },
   { name: "Game of the Year", href: "/game-of-the-year", current: false },
+  { name: "Random String", href: "/random-string", current: false },
 ];
 
 export default function Navbar() {

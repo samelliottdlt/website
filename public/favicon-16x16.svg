@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <!-- Simplified Jiji for 16x16 -->
+  <!-- Cat head -->
+  <ellipse fill="#010101" cx="8" cy="9" rx="6" ry="5"/>
+  
+  <!-- Cat ears -->
+  <polygon fill="#010101" points="4,6 6,3 8,6"/>
+  <polygon fill="#010101" points="8,6 10,3 12,6"/>
+  
+  <!-- Eyes -->
+  <ellipse fill="#E4C05E" cx="6" cy="8" rx="1" ry="1.5"/>
+  <ellipse fill="#E4C05E" cx="10" cy="8" rx="1" ry="1.5"/>
+  
+  <!-- Eye pupils -->
+  <ellipse fill="#010101" cx="6" cy="8.2" rx="0.3" ry="1"/>
+  <ellipse fill="#010101" cx="10" cy="8.2" rx="0.3" ry="1"/>
+  
+  <!-- Nose -->
+  <polygon fill="#EC7D7A" points="8,10 8.7,10.7 8,11 7.3,10.7"/>
+</svg>

@@ -91,6 +91,7 @@ export default function GameDisplay({ game, allGames }: GameDisplayProps) {
             <img
               src={game.imageUrl}
               alt={`${game.title} box art`}
+              loading="lazy"
               className={classNames(
                 "w-64 h-64 object-cover rounded-lg shadow-lg transition-all duration-300",
                 isPending ? "opacity-50 scale-95" : "opacity-100 scale-100"

@@ -1,13 +1,13 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 
 const DEFAULT_CHARSET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 const DEFAULT_LENGTH = 32;
 
-export default function RandomStringPage() {
+function RandomStringGenerator() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -74,5 +74,13 @@ export default function RandomStringPage() {
         <p className="mt-4 break-all whitespace-pre-wrap">{result}</p>
       </div>
     </div>
+  );
+}
+
+export default function RandomStringPage() {
+  return (
+    <Suspense fallback={<div className="p-4 max-w-2xl mx-auto"><h1 className="text-2xl font-bold mb-4">Random String Generator</h1><div>Loading...</div></div>}>
+      <RandomStringGenerator />
+    </Suspense>
   );
 }

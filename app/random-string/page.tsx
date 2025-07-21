@@ -7,6 +7,8 @@ const DEFAULT_CHARSET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 const DEFAULT_LENGTH = 32;
 const MAX_LENGTH = 1000000; // 1 million character limit
+const CHUNK_SIZE = 10000; // Size of chunks for long string generation
+const PRESET_LENGTHS = [32, 100, 1000, 10000, 100000, 1000000];
 
 function RandomStringGenerator() {
   const searchParams = useSearchParams();
@@ -39,9 +41,9 @@ function RandomStringGenerator() {
       const actualLength = Math.min(length, MAX_LENGTH);
       
       // For very long strings, generate in chunks to prevent UI blocking
-      if (actualLength > 10000) {
+      if (actualLength > CHUNK_SIZE) {
         let str = "";
-        const chunkSize = 10000;
+        const chunkSize = CHUNK_SIZE;
         
         for (let chunk = 0; chunk < Math.ceil(actualLength / chunkSize); chunk++) {
           if (controller.signal.aborted) {
@@ -92,6 +94,16 @@ function RandomStringGenerator() {
       setTimeout(() => setCopyStatus("idle"), 2000);
     }
   }, [result]);
+
+  const getUtf8ByteSize = useCallback((str: string) => {
+    return new Blob([str]).size;
+  }, []);
+
+  const generateWithPresetLength = useCallback((presetLength: number) => {
+    setLength(presetLength);
+    // Trigger generation after length is set
+    setTimeout(() => generateString(), 0);
+  }, [generateString]);
 
   const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLength = Math.min(Number(e.target.value) || 0, MAX_LENGTH);
@@ -166,6 +178,23 @@ function RandomStringGenerator() {
           </span>
         </div>
         
+        <div>
+          <label className="block font-medium mb-2">Quick Generate:</label>
+          <div className="flex flex-wrap gap-2">
+            {PRESET_LENGTHS.map((presetLength) => (
+              <button
+                key={presetLength}
+                type="button"
+                onClick={() => generateWithPresetLength(presetLength)}
+                disabled={isGenerating}
+                className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                {presetLength.toLocaleString()}
+              </button>
+            ))}
+          </div>
+        </div>
+        
         {result && (
           <div className="mt-4">
             <div className="flex justify-between items-center mb-2">
@@ -182,8 +211,9 @@ function RandomStringGenerator() {
                 {result}
               </p>
             </div>
-            <div className="text-sm text-gray-600 mt-1">
-              Length: {result.length.toLocaleString()} characters
+            <div className="text-sm text-gray-600 mt-1 space-y-1">
+              <div>Length: {result.length.toLocaleString()} characters</div>
+              <div>UTF-8 Size: {getUtf8ByteSize(result).toLocaleString()} bytes</div>
             </div>
           </div>
         )}

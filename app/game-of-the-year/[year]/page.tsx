@@ -87,11 +87,11 @@ export default async function GameOfTheYearPage({ params }: PageProps) {
         Game of the Year
         <InfoTooltip>
           <p className="text-left">
-            This page bookmarks my recent Game of the Year picks and
-            demonstrates lazy loading of images from the RAWG API. Images are
+            This page bookmarks my Game of the Year picks and was really built to 
+            try implementing lazy loading of images from a remote API with prefetching. Images are
             fetched server-side with an aggressive cache so the API key remains
             secret and requests stay within rate limits. A placeholder
-            silhouette is shown while each image loads.
+            container is displayed while each image loads.
           </p>
         </InfoTooltip>
       </h1>

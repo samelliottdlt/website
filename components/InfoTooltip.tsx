@@ -20,9 +20,9 @@ export default function InfoTooltip({ children }: InfoTooltipProps) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Information"
-        className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-400 bg-white text-gray-600"
+        className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-400 bg-white text-gray-600"
       >
-        <InformationCircleIcon className="w-4 h-4" />
+        <InformationCircleIcon className="w-6 h-6" />
       </button>
       {open && (
         <div className="absolute z-10 left-1/2 -translate-x-1/2 mt-2 w-72 rounded bg-gray-800 p-3 text-sm text-white shadow-lg">

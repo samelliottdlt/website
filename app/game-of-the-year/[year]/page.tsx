@@ -1,5 +1,6 @@
 import data from "../goty.json";
 import GameDisplay from "../GameDisplay";
+import InfoTooltip from "../../../components/InfoTooltip";
 import { notFound } from "next/navigation";
 
 // Route segment config - cache this route statically
@@ -65,10 +66,15 @@ export default async function GameOfTheYearPage({ params }: PageProps) {
     notFound();
   }
   
-  const apiKey = process.env.RAWG_API_KEY!;
-  
-  // Fetch only the image for this specific game
-  const imageUrl = await fetchGameImage(game.title, apiKey);
+  const apiKey = process.env.RAWG_API_KEY;
+  let imageUrl: string | null = null;
+
+  if (apiKey) {
+    // Fetch only the image for this specific game
+    imageUrl = await fetchGameImage(game.title, apiKey);
+  } else {
+    console.warn("RAWG_API_KEY is not set; skipping image fetch.");
+  }
   
   const gameWithImage = {
     ...game,
@@ -77,8 +83,17 @@ export default async function GameOfTheYearPage({ params }: PageProps) {
 
   return (
     <div className="p-5 text-center">
-      <h1 className="text-3xl mb-4 font-bold text-indigo-600">
+      <h1 className="text-3xl mb-4 font-bold text-indigo-600 flex items-center justify-center gap-2">
         Game of the Year
+        <InfoTooltip>
+          <p className="text-left">
+            This page bookmarks my recent Game of the Year picks and
+            demonstrates lazy loading of images from the RAWG API. Images are
+            fetched server-side with an aggressive cache so the API key remains
+            secret and requests stay within rate limits. A placeholder
+            silhouette is shown while each image loads.
+          </p>
+        </InfoTooltip>
       </h1>
       <GameDisplay game={gameWithImage} allGames={gotyData} />
     </div>

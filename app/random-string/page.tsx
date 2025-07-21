@@ -105,7 +105,17 @@ function RandomStringGenerator() {
   }, [result]);
 
   const getUtf8ByteSize = useCallback((str: string) => {
-    return new Blob([str]).size;
+    const bytes = new Blob([str]).size;
+    
+    if (bytes < 1024) {
+      return `${bytes} bytes`;
+    } else if (bytes < 1024 * 1024) {
+      const kb = bytes / 1024;
+      return `${kb.toFixed(kb >= 100 ? 0 : kb >= 10 ? 1 : 2)} KB`;
+    } else {
+      const mb = bytes / (1024 * 1024);
+      return `${mb.toFixed(mb >= 100 ? 0 : mb >= 10 ? 1 : 2)} MB`;
+    }
   }, []);
 
   const generateWithPresetLength = useCallback((presetLength: number) => {
@@ -260,7 +270,7 @@ function RandomStringGenerator() {
             </div>
             <div className="text-sm text-gray-600 mt-1 space-y-1">
               <div>Length: {result.length.toLocaleString()} characters</div>
-              <div>UTF-8 Size: {getUtf8ByteSize(result).toLocaleString()} bytes</div>
+              <div>UTF-8 Size: {getUtf8ByteSize(result)}</div>
             </div>
           </div>
         )}

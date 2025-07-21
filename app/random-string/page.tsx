@@ -20,6 +20,7 @@ function RandomStringGenerator() {
   const [result, setResult] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+  const [allowOverLimit, setAllowOverLimit] = useState(false);
   
   const abortControllerRef = useRef<AbortController | null>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
@@ -38,7 +39,7 @@ function RandomStringGenerator() {
 
     try {
       const chars = charset || DEFAULT_CHARSET;
-      const actualLength = Math.min(length, MAX_LENGTH);
+      const actualLength = allowOverLimit ? length : Math.min(length, MAX_LENGTH);
       
       // For very long strings, generate in chunks to prevent UI blocking
       if (actualLength > CHUNK_SIZE) {
@@ -82,7 +83,7 @@ function RandomStringGenerator() {
       setIsGenerating(false);
       abortControllerRef.current = null;
     }
-  }, [length, charset]);
+  }, [length, charset, allowOverLimit]);
 
   const copyToClipboard = useCallback(async () => {
     try {
@@ -106,8 +107,12 @@ function RandomStringGenerator() {
   }, [generateString]);
 
   const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newLength = Math.min(Number(e.target.value) || 0, MAX_LENGTH);
-    setLength(newLength);
+    const newLength = Number(e.target.value) || 0;
+    if (allowOverLimit) {
+      setLength(newLength);
+    } else {
+      setLength(Math.min(newLength, MAX_LENGTH));
+    }
   };
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -140,15 +145,37 @@ function RandomStringGenerator() {
             id="length-input"
             type="number"
             min="1"
-            max={MAX_LENGTH}
+            max={allowOverLimit ? undefined : MAX_LENGTH}
             value={length}
             onChange={handleLengthChange}
             className="border rounded p-1 w-32"
             disabled={isGenerating}
           />
           <span className="ml-2 text-sm text-gray-600">
-            (max: {MAX_LENGTH.toLocaleString()})
+            {allowOverLimit ? "(no limit)" : `(max: ${MAX_LENGTH.toLocaleString()})`}
           </span>
+          {length > MAX_LENGTH && !allowOverLimit && (
+            <div className="mt-1 text-sm text-amber-600">
+              ⚠️ Length exceeds recommended limit. Enable &quot;Allow Over Limit&quot; below to proceed.
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <input
+            id="allow-over-limit"
+            type="checkbox"
+            checked={allowOverLimit}
+            onChange={(e) => setAllowOverLimit(e.target.checked)}
+            disabled={isGenerating}
+            className="rounded"
+          />
+          <label htmlFor="allow-over-limit" className="text-sm">
+            <span className="font-medium">Allow Over Limit</span>
+            <span className="text-gray-600 ml-1">
+              (⚠️ Very large strings may cause browser performance issues)
+            </span>
+          </label>
         </div>
         <div>
           <label className="mr-2 font-medium" htmlFor="charset-input">
@@ -168,7 +195,7 @@ function RandomStringGenerator() {
             ref={generateButtonRef}
             type="button"
             onClick={generateString}
-            disabled={isGenerating}
+            disabled={isGenerating || (length > MAX_LENGTH && !allowOverLimit)}
             className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {isGenerating ? "Generating..." : "Generate"}
@@ -186,10 +213,13 @@ function RandomStringGenerator() {
                 key={presetLength}
                 type="button"
                 onClick={() => generateWithPresetLength(presetLength)}
-                disabled={isGenerating}
+                disabled={isGenerating || (presetLength > MAX_LENGTH && !allowOverLimit)}
                 className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 {presetLength.toLocaleString()}
+                {presetLength > MAX_LENGTH && !allowOverLimit && (
+                  <span className="ml-1 text-amber-600">🔒</span>
+                )}
               </button>
             ))}
           </div>

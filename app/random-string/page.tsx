@@ -25,7 +25,7 @@ function RandomStringGenerator() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
 
-  const generateString = useCallback(async () => {
+  const generateStringWithLength = useCallback(async (targetLength: number) => {
     // Cancel any ongoing generation
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -39,7 +39,7 @@ function RandomStringGenerator() {
 
     try {
       const chars = charset || DEFAULT_CHARSET;
-      const actualLength = allowOverLimit ? length : Math.min(length, MAX_LENGTH);
+      const actualLength = allowOverLimit ? targetLength : Math.min(targetLength, MAX_LENGTH);
       
       // For very long strings, generate in chunks to prevent UI blocking
       if (actualLength > CHUNK_SIZE) {
@@ -83,7 +83,11 @@ function RandomStringGenerator() {
       setIsGenerating(false);
       abortControllerRef.current = null;
     }
-  }, [length, charset, allowOverLimit]);
+  }, [charset, allowOverLimit]);
+
+  const generateString = useCallback(async () => {
+    return generateStringWithLength(length);
+  }, [generateStringWithLength, length]);
 
   const copyToClipboard = useCallback(async () => {
     try {
@@ -102,9 +106,9 @@ function RandomStringGenerator() {
 
   const generateWithPresetLength = useCallback((presetLength: number) => {
     setLength(presetLength);
-    // Trigger generation after length is set
-    setTimeout(() => generateString(), 0);
-  }, [generateString]);
+    // Trigger generation with the specific length
+    generateStringWithLength(presetLength);
+  }, [generateStringWithLength]);
 
   const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLength = Number(e.target.value) || 0;

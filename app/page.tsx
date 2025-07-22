@@ -1,11 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { navCategories } from "../lib/navigation";
-import "./page.css";
 
 function Home() {
   return (
-    <div className="home-container p-6">
+    <div className="p-6">
       <h1 className="text-3xl mb-6 font-bold">Welcome!</h1>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {navCategories.map((category) => (
@@ -26,13 +24,6 @@ function Home() {
           </div>
         ))}
       </div>
-      <Image
-        src="/kiki-fly.svg"
-        alt="A flying Kiki"
-        className="fixed bottom-2 right-2 w-16"
-        width={500}
-        height={500}
-      />
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default function SideNav() {
     );
 
   return (
-    <Disclosure as="nav" className="bg-gray-800 min-h-screen">
+    <Disclosure as="nav" className="bg-gray-800 h-screen">
       {({ open }) => (
         <>
           <div className="sm:hidden p-2 flex items-center justify-between">
@@ -32,7 +32,7 @@ export default function SideNav() {
               )}
             </Disclosure.Button>
           </div>
-          <div className="hidden sm:block p-4 w-56">
+          <div className="hidden sm:block p-4 w-[20vw] max-w-xs">
             {navCategories.map((category) => (
               <div key={category.name} className="mb-6">
                 <h3 className="text-gray-400 uppercase text-xs font-semibold mb-2">

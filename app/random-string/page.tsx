@@ -8,7 +8,7 @@ const DEFAULT_CHARSET =
 const DEFAULT_LENGTH = 32;
 const MAX_LENGTH = 1000000; // 1 million character limit
 const CHUNK_SIZE = 10000; // Size of chunks for long string generation
-const PRESET_LENGTHS = [32, 100, 1000, 10000, 100000, 1000000];
+const PRESET_LENGTHS = [32, 100, 1000, 10000, 100000, 500000, 1000000];
 
 function RandomStringGenerator() {
   const searchParams = useSearchParams();

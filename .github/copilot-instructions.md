@@ -49,7 +49,9 @@ When adding new projects, follow the established pattern of creating a dedicated
 - Use Tailwind CSS classes for styling (avoid custom CSS when possible)
 - Component names should be PascalCase
 - File names should match component names
-- Use ESLint and Prettier for code quality and formatting. ESLint is a linting tool that checks for code errors and enforces coding standards; it runs automatically before builds. Prettier is a code formatter that ensures consistent styling; it must be run manually, typically before committing changes.
+- Use ESLint and Prettier for code quality and formatting.
+  - **ESLint**: A linting tool that checks for code errors and enforces coding standards. It runs automatically before builds.
+  - **Prettier**: A code formatter that ensures consistent styling. It must be run manually, typically before committing changes.
 - Write meaningful component and function names
 - Use proper TypeScript interfaces or types (prefer types) for props and data structures
 - Prefer small and composable functions that can be reused

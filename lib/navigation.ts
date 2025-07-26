@@ -22,7 +22,11 @@ export const categories: NavigationCategory[] = [
     items: [
       { name: "Fusion Calculator", href: "/fusion-calculator", emoji: "⚡" },
       { name: "Game of the Year", href: "/game-of-the-year", emoji: "🏆" },
-      { name: "Smoothie Calculator", href: "/smoothie-calculator", emoji: "🥤" },
+      {
+        name: "Smoothie Calculator",
+        href: "/smoothie-calculator",
+        emoji: "🥤",
+      },
     ],
   },
   {

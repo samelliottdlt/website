@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Custom hook for managing localStorage with automatic synchronization
@@ -6,7 +6,10 @@ import { useState, useEffect } from 'react';
  * @param initialValue - The initial value to use if no stored value exists
  * @returns [value, setValue] - Current value and setter function
  */
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+export function useLocalStorage<T>(
+  key: string,
+  initialValue: T,
+): [T, (value: T) => void] {
   // Always start with the initial value to avoid hydration mismatches
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 

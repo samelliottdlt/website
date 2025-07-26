@@ -9,9 +9,12 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  
+
   // Use the reusable localStorage hook
-  const [isCollapsed, setIsCollapsed] = useLocalStorage('sidebar-collapsed', false);
+  const [isCollapsed, setIsCollapsed] = useLocalStorage(
+    "sidebar-collapsed",
+    false,
+  );
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);

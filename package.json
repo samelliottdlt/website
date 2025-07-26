@@ -5,14 +5,16 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run lint",
+    "prebuild": "npm run lint && npm run build:wasm",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "jest",
-    "test:inspect": "node --inspect ./node_modules/.bin/jest --runInBand"
+    "test:inspect": "node --inspect ./node_modules/.bin/jest --runInBand",
+    "build:wasm": "./scripts/build-wasm.sh",
+    "dev:wasm": "./scripts/build-wasm.sh && npm run dev"
   },
   "repository": {
     "type": "git",

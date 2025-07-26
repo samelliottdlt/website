@@ -1,6 +1,6 @@
 function Page() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen text-center bg-white p-5">
+    <div className="flex flex-col items-center justify-center min-h-full text-center bg-white p-5">
       <h1 className="text-6xl text-black mb-5">About Me</h1>
       <p className="text-xl text-black mb-2">
         Hello, I&apos;m Sam. I am a software engineer from Puerto Rico. I enjoy

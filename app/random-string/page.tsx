@@ -1,8 +1,12 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { formatUtf8ByteSize } from "../../lib/utf8";
+import {
+  useQueryParams,
+  numberParam,
+  booleanParam,
+} from "../../hooks/useQueryParams";
 
 const DEFAULT_CHARSET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -12,22 +16,29 @@ const CHUNK_SIZE = 10000; // Size of chunks for long string generation
 const PRESET_LENGTHS = [32, 100, 1000, 10000, 100000, 500000, 1000000];
 
 function RandomStringGenerator() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const [params, setParams] = useQueryParams({
+    length: numberParam("length", DEFAULT_LENGTH),
+    allowOverLimit: booleanParam("allowOverLimit", false),
+  });
 
-  // Read initial values from URL params
-  const urlLength = Number(searchParams.get("length")) || DEFAULT_LENGTH;
-  const urlAllowOverLimit = searchParams.get("allowOverLimit") === "true";
+  // Destructure for easier access
+  const { length, allowOverLimit } = params;
+  const setLength = useCallback(
+    (newLength: number) => setParams({ length: newLength }),
+    [setParams],
+  );
+  const setAllowOverLimit = useCallback(
+    (newAllowOverLimit: boolean) =>
+      setParams({ allowOverLimit: newAllowOverLimit }),
+    [setParams],
+  );
 
-  // Initialize states with URL values
-  const [length, setLength] = useState(urlLength);
   const [charset, setCharset] = useState(DEFAULT_CHARSET);
   const [result, setResult] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">(
     "idle",
   );
-  const [allowOverLimit, setAllowOverLimit] = useState(urlAllowOverLimit);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
@@ -135,7 +146,7 @@ function RandomStringGenerator() {
       // Trigger generation with the specific length
       generateStringWithLength(presetLength);
     },
-    [generateStringWithLength],
+    [generateStringWithLength, setLength],
   );
 
   const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,26 +172,6 @@ function RandomStringGenerator() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
-
-  useEffect(() => {
-    // Only update URL if values have actually changed from URL params
-    const currentUrlLength =
-      Number(searchParams.get("length")) || DEFAULT_LENGTH;
-    const currentUrlAllowOverLimit =
-      searchParams.get("allowOverLimit") === "true";
-
-    if (
-      length !== currentUrlLength ||
-      allowOverLimit !== currentUrlAllowOverLimit
-    ) {
-      const params = new URLSearchParams();
-      params.set("length", length.toString());
-      if (allowOverLimit) {
-        params.set("allowOverLimit", "true");
-      }
-      router.replace(`?${params.toString()}`, { scroll: false });
-    }
-  }, [length, allowOverLimit, router, searchParams]);
 
   return (
     <div className="p-4 max-w-2xl mx-auto">

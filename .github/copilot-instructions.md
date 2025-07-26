@@ -20,12 +20,14 @@ This is a personal website that serves as a portfolio and houses various miscell
 ## Project Types and Patterns
 
 This site hosts various types of interactive projects:
+
 - **Calculators**: Tools that help users compute or determine something (fusion calculator, smoothie calculator)
 - **Games**: Interactive entertainment projects
 - **Utilities**: Simple tools for generating or manipulating data (random string generator)
 - **Informational**: Pages that display curated content (game of the year)
 
 When adding new projects, follow the established pattern of creating a dedicated directory under `/app/` with:
+
 - `page.tsx`: Main component (prefer server components; push interactivity to leaf components)
 - `util.ts`: Project-specific logic and calculations (colocate with usage when possible)
 - Data files in JSON format (if needed)

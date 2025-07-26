@@ -16,10 +16,10 @@ export default function Sidebar() {
   };
 
   return (
-    <nav 
+    <nav
       className={classNames(
         "bg-gray-100 p-4 space-y-4 overflow-y-auto h-screen box-border relative transition-all duration-300 flex-shrink-0",
-        isCollapsed ? "w-16" : "w-56"
+        isCollapsed ? "w-16" : "w-56",
       )}
     >
       {/* Toggle Button */}
@@ -27,7 +27,7 @@ export default function Sidebar() {
         onClick={toggleCollapse}
         className={classNames(
           "absolute top-4 p-1 rounded hover:bg-gray-200 z-10",
-          isCollapsed ? "left-1/2 transform -translate-x-1/2" : "right-2"
+          isCollapsed ? "left-1/2 transform -translate-x-1/2" : "right-2",
         )}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
@@ -53,7 +53,7 @@ export default function Sidebar() {
               Home
             </Link>
           </div>
-          
+
           {categories.map((category) => (
             <div key={category.title}>
               <h3 className="mb-2 text-sm font-semibold text-gray-700">

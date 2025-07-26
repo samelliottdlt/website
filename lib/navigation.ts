@@ -21,7 +21,7 @@ export const categories: NavigationCategory[] = [
     items: [
       { name: "Fusion Calculator", href: "/fusion-calculator" },
       { name: "Game of the Year", href: "/game-of-the-year" },
-      { name: "Smoothie Calculator", href: "/smoothie-calculator" }
+      { name: "Smoothie Calculator", href: "/smoothie-calculator" },
     ],
   },
   {

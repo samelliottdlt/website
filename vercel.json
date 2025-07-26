@@ -4,7 +4,7 @@
       "src": "package.json",
       "use": "@vercel/next",
       "config": {
-        "installCommand": "npm ci --force"
+        "installCommand": "npm ci"
       }
     }
   ],

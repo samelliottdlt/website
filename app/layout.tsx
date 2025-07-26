@@ -1,7 +1,6 @@
 import "../styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter } from "next/font/google";
-import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 
 export const metadata = {

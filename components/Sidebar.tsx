@@ -2,14 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { categories, getItemEmoji } from "../lib/navigation";
 import { classNames } from "../lib/util";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      const savedState = localStorage.getItem('sidebar-collapsed');
+      return savedState !== null ? JSON.parse(savedState) : false;
+    } catch {
+      return false;
+    }
+  });
+  
+  // Save collapsed state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
+  }, [isCollapsed]);
 
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);

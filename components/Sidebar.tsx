@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { categories, getItemEmoji, getCategoryEmoji } from "../lib/navigation";
+import { categories, getItemEmoji } from "../lib/navigation";
 import { classNames } from "../lib/util";
 
 export default function Sidebar() {
@@ -83,33 +83,34 @@ export default function Sidebar() {
 
       {/* Collapsed state - show only emojis */}
       {isCollapsed && (
-        <div className="space-y-2 pt-12">
+        <div className="space-y-3 pt-12">
           <Link
             href="/"
             className={classNames(
               pathname === "/"
                 ? "text-indigo-600 font-medium"
                 : "text-gray-600 hover:text-indigo-600",
-              "block px-2 py-1 text-xs text-center rounded",
+              "block px-2 py-2 text-lg text-center rounded",
             )}
             title="Home"
           >
             🏠
           </Link>
-          {categories.map((category) => (
-            <div key={category.title} className="space-y-1">
-              <div className="text-xs font-semibold text-gray-700 text-center px-1 py-1" title={category.title}>
-                {getCategoryEmoji(category)}
-              </div>
+          <div className="border-t border-gray-300 mx-2"></div>
+          {categories.map((category, categoryIndex) => (
+            <div key={category.title} className="space-y-2">
+              {categoryIndex > 0 && (
+                <div className="border-t border-gray-300 mx-2"></div>
+              )}
               {category.items.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={classNames(
                     pathname === item.href
-                      ? "text-indigo-600 font-medium"
-                      : "text-gray-600 hover:text-indigo-600",
-                    "block px-1 py-1 text-xs text-center rounded",
+                      ? "text-indigo-600 font-medium bg-indigo-50"
+                      : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50",
+                    "block px-1 py-2 text-lg text-center rounded transition-colors",
                   )}
                   title={item.name}
                 >

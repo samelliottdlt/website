@@ -163,8 +163,11 @@ The hook automatically detects support and falls back gracefully.
 
 ## Example Implementation
 
-See `/app/utf8-byte-count/page.tsx` for a complete example that demonstrates:
+See `/app/rust-performance-eval/page.tsx` for a complete example that demonstrates:
+
 - WASM integration with React
-- Performance comparison with JavaScript
+- Performance comparison between Rust and JavaScript
+- Mathematical computation benchmarks
+- String analysis comparisons
 - Error handling and fallbacks
-- Real-time text analysis
+- Real-time performance evaluation

@@ -33,12 +33,17 @@ export const categories: NavigationCategory[] = [
     title: "Tools",
     items: [
       { name: "Random String", href: "/random-string", emoji: "🎲" },
-      { name: "UTF-8 Byte Count", href: "/utf8-byte-count", emoji: "🦀" },
       {
         name: "UTF-8 Length and Byte Count",
         href: "/string-length",
         emoji: "🔤",
       },
+    ],
+  },
+  {
+    title: "Exploration",
+    items: [
+      { name: "Rust Performance Eval", href: "/rust-performance-eval", emoji: "🦀" },
     ],
   },
 ];

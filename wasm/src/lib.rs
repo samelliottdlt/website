@@ -148,18 +148,54 @@ pub fn analyze_string(text: &str) -> StringAnalysis {
     }
 }
 
-// Performance test function for benchmarking WASM vs JS
+// Pure integer arithmetic performance test (no JS boundary crossings)
 #[wasm_bindgen]
-pub fn performance_test(iterations: u32) -> f64 {
+pub fn compute_test(iterations: u32) -> f64 {
     let start = js_sys::Date::now();
     
-    let mut sum = 0.0;
+    let mut result = 0i64;
     for i in 0..iterations {
-        sum += (i as f64).sin().cos().tan();
+        // Pure integer operations that stay entirely in WASM
+        let mut temp = i as i64;
+        for _ in 0..10 {
+            temp = temp * temp + 1;
+            temp = temp % 1000000; // Prevent overflow
+            temp = temp + i as i64;
+            temp = temp ^ (temp >> 16); // Bit manipulation
+        }
+        result = result.wrapping_add(temp);
     }
     
     let end = js_sys::Date::now();
-    console_log!("WASM performance test completed: {} iterations in {}ms", iterations, end - start);
+    console_log!("WASM compute test completed: {} iterations, result: {}", iterations, result);
+    
+    end - start
+}
+
+// Memory-intensive test that favors WASM (direct memory access)
+#[wasm_bindgen]
+pub fn memory_intensive_test(size: u32) -> f64 {
+    let start = js_sys::Date::now();
+    
+    // Create and manipulate large arrays
+    let mut data: Vec<i32> = Vec::with_capacity(size as usize);
+    
+    // Fill with computed values
+    for i in 0..size {
+        data.push((i * 17 + 13) as i32);
+    }
+    
+    // Perform operations on the array
+    let mut sum = 0i64;
+    for i in 0..size as usize {
+        sum += data[i] as i64;
+        if i > 0 {
+            sum += data[i - 1] as i64;
+        }
+    }
+    
+    let end = js_sys::Date::now();
+    console_log!("WASM memory test completed: {} elements, sum: {}", size, sum);
     
     end - start
 }

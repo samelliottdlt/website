@@ -10,12 +10,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   // WASM support
-  webpack: (config, { isServer }) => {
-    // Add WASM support
+  webpack: (config) => {
+    // Add WASM support - using asyncWebAssembly for better performance
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
-      syncWebAssembly: true,
     };
 
     // Handle .wasm files
@@ -24,23 +23,8 @@ const nextConfig = {
       type: "webassembly/async",
     });
 
-    // Resolve wasm-pack generated files
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      path: false,
-    };
-
-    // Don't run WASM on the server side for now
-    if (isServer) {
-      config.externals = config.externals || [];
-      config.externals.push(({ request }, callback) => {
-        if (request.endsWith('.wasm')) {
-          return callback(null, `commonjs ${request}`);
-        }
-        callback();
-      });
-    }
+    // Resolve .wasm files properly
+    config.resolve.extensions.push('.wasm');
 
     return config;
   },

@@ -40,12 +40,6 @@ export const categories: NavigationCategory[] = [
       },
     ],
   },
-  {
-    title: "Exploration",
-    items: [
-      { name: "Rust Performance Eval", href: "/rust-performance-eval", emoji: "🦀" },
-    ],
-  },
 ];
 
 // Utility function to get emoji with fallback

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import { categories } from "../lib/navigation";
+import { categories, getItemEmoji, getCategoryEmoji } from "../lib/navigation";
 import { classNames } from "../lib/util";
 
 export default function Sidebar() {
@@ -81,7 +81,7 @@ export default function Sidebar() {
         </>
       )}
 
-      {/* Collapsed state - show only icons or initials */}
+      {/* Collapsed state - show only emojis */}
       {isCollapsed && (
         <div className="space-y-2 pt-12">
           <Link
@@ -94,12 +94,12 @@ export default function Sidebar() {
             )}
             title="Home"
           >
-            H
+            🏠
           </Link>
           {categories.map((category) => (
             <div key={category.title} className="space-y-1">
-              <div className="text-xs font-semibold text-gray-700 text-center px-1 py-1">
-                {category.title.charAt(0)}
+              <div className="text-xs font-semibold text-gray-700 text-center px-1 py-1" title={category.title}>
+                {getCategoryEmoji(category)}
               </div>
               {category.items.map((item) => (
                 <Link
@@ -113,7 +113,7 @@ export default function Sidebar() {
                   )}
                   title={item.name}
                 >
-                  {item.name.charAt(0)}
+                  {getItemEmoji(item)}
                 </Link>
               ))}
             </div>

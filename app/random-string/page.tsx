@@ -135,10 +135,7 @@ function RandomStringGenerator() {
     }
   }, [result]);
 
-  const getUtf8ByteSize = useCallback(
-    (str: string) => formatUtf8ByteSize(str),
-    [],
-  );
+  const getUtf8ByteSize = (str: string) => formatUtf8ByteSize(str);
 
   const generateWithPresetLength = useCallback(
     (presetLength: number) => {

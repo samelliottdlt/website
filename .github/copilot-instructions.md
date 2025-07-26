@@ -11,6 +11,7 @@ This is a personal website that serves as a portfolio and houses various miscell
   - `blog/`: MDX-powered blog system with syntax highlighting and post management
   - **Project directories**: Each tool/calculator/game lives in its own directory (e.g., `fusion-calculator/`, `smoothie-calculator/`). New projects should follow this pattern with kebab-case naming.
 - `/components/`: Reusable React components (PascalCase naming)
+- `/hooks/`: Custom React hooks for shared stateful logic (camelCase naming)
 - `/posts/`: MDX blog posts with frontmatter
 - `/lib/`: Shared utility functions
 - `/styles/`: Global CSS and styling
@@ -57,6 +58,7 @@ When adding new projects, follow the established pattern of creating a dedicated
 - Write meaningful component and function names
 - Use proper TypeScript interfaces or types (prefer types) for props and data structures
 - Prefer small and composable functions that can be reused
+- Prefer to create reusable hooks and place them in the hooks folder when possible
 
 ## File and Directory Naming
 

@@ -31,7 +31,10 @@ export const categories: NavigationCategory[] = [
   },
   {
     title: "Tools",
-    items: [{ name: "Random String", href: "/random-string", emoji: "🎲" }],
+    items: [
+      { name: "Random String", href: "/random-string", emoji: "🎲" },
+      { name: "UTF-8 Length", href: "/string-length", emoji: "🔤" },
+    ],
   },
 ];
 

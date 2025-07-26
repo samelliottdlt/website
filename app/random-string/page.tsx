@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { formatUtf8ByteSize } from "../../lib/utf8";
 
 const DEFAULT_CHARSET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -123,19 +124,10 @@ function RandomStringGenerator() {
     }
   }, [result]);
 
-  const getUtf8ByteSize = useCallback((str: string) => {
-    const bytes = new Blob([str]).size;
-
-    if (bytes < 1024) {
-      return `${bytes} bytes`;
-    } else if (bytes < 1024 * 1024) {
-      const kb = bytes / 1024;
-      return `${kb.toFixed(kb >= 100 ? 0 : kb >= 10 ? 1 : 2)} KB`;
-    } else {
-      const mb = bytes / (1024 * 1024);
-      return `${mb.toFixed(mb >= 100 ? 0 : mb >= 10 ? 1 : 2)} MB`;
-    }
-  }, []);
+  const getUtf8ByteSize = useCallback(
+    (str: string) => formatUtf8ByteSize(str),
+    [],
+  );
 
   const generateWithPresetLength = useCallback(
     (presetLength: number) => {

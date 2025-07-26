@@ -1,0 +1,109 @@
+import { useEffect, useState, useCallback } from 'react';
+
+export interface StringAnalysis {
+  byte_count: number;
+  char_count: number;
+  word_count: number;
+  line_count: number;
+}
+
+// Type definitions for our WASM module
+export interface WasmModule {
+  greet: (name: string) => string;
+  fibonacci: (n: number) => bigint;
+  is_prime: (n: bigint) => boolean;
+  generate_primes: (limit: bigint) => BigUint64Array;
+  factorial: (n: bigint) => bigint;
+  hash_string: (input: string) => bigint;
+  utf8_byte_count: (text: string) => number;
+  unicode_char_count: (text: string) => number;
+  analyze_string: (text: string) => StringAnalysis;
+  compute_test: (iterations: number) => number;
+  memory_intensive_test: (size: number) => number;
+}
+
+interface UseWasmReturn {
+  wasm: WasmModule | null;
+  loading: boolean;
+  error: string | null;
+}
+
+/**
+ * Custom hook to load and manage WebAssembly module
+ * Handles initialization, loading states, and error handling
+ */
+export function useWasm(): UseWasmReturn {
+  const [wasm, setWasm] = useState<WasmModule | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadWasm = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined') {
+        setError('WebAssembly is only available in the browser');
+        setLoading(false);
+        return;
+      }
+
+      // Check if WebAssembly is supported
+      if (typeof WebAssembly === 'undefined') {
+        setError('WebAssembly is not supported in this browser');
+        setLoading(false);
+        return;
+      }
+
+            // For bundler target, import the module directly - it auto-initializes
+      const wasmModule = await import('../wasm/pkg/website-wasm.js');
+      
+      // Bundler target doesn't need explicit initialization, but we should verify it's ready
+      // The module should be ready immediately after import with bundler target
+      setWasm(wasmModule as WasmModule);
+    } catch (err) {
+      console.error('Failed to load WebAssembly module:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load WebAssembly module');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWasm();
+  }, [loadWasm]);
+
+  return { wasm, loading, error };
+}
+
+/**
+ * Utility function to check if WASM is supported
+ */
+export function isWasmSupported(): boolean {
+  return (
+    typeof window !== 'undefined' && 
+    typeof WebAssembly !== 'undefined'
+  );
+}
+
+/**
+ * Helper function to handle WASM errors gracefully
+ */
+export function withWasmFallback<T>(
+  wasmFn: () => T,
+  fallbackFn: () => T,
+  errorHandler?: (error: Error) => void
+): T {
+  try {
+    if (!isWasmSupported()) {
+      return fallbackFn();
+    }
+    return wasmFn();
+  } catch (error) {
+    if (errorHandler && error instanceof Error) {
+      errorHandler(error);
+    }
+    return fallbackFn();
+  }
+}

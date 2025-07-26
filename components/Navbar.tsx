@@ -1,28 +1,19 @@
 "use client";
 
-import { Disclosure } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Disclosure, Menu, Transition } from "@headlessui/react";
+import {
+  Bars3Icon,
+  XMarkIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { classNames } from "../lib/util";
-
-const defaultNavigation = [
-  { name: "About Me", href: "/about-me", current: false },
-  { name: "Blog", href: "/blog", current: false },
-  { name: "Fusion Calculator", href: "/fusion-calculator", current: false },
-  { name: "Smoothie Calculator", href: "/smoothie-calculator", current: false },
-  { name: "Game of the Year", href: "/game-of-the-year", current: false },
-  { name: "Random String", href: "/random-string", current: false },
-];
+import { categories } from "../lib/navigation";
 
 export default function Navbar() {
   const pathName = usePathname();
-
-  const navigation = defaultNavigation.map((item) => {
-    const current = pathName === item.href;
-    return { ...item, current };
-  });
 
   return (
     <Disclosure as="nav" className="bg-gray-800">
@@ -60,24 +51,41 @@ export default function Navbar() {
                     />
                   </Link>
                 </div>
-                <div className="hidden sm:ml-6 sm:block">
-                  <div className="flex space-x-4">
-                    {navigation.map((item) => (
-                      <a
-                        key={item.name}
-                        href={item.href}
-                        className={classNames(
-                          item.current
-                            ? "bg-gray-900 text-white"
-                            : "text-gray-300 hover:bg-gray-700 hover:text-white",
-                          "px-3 py-2 rounded-md text-sm font-medium",
-                        )}
-                        aria-current={item.current ? "page" : undefined}
+                <div className="hidden sm:ml-6 sm:flex space-x-4">
+                  {categories.map((category) => (
+                    <Menu as="div" key={category.title} className="relative">
+                      <Menu.Button className="inline-flex items-center rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">
+                        {category.title}
+                        <ChevronDownIcon className="ml-1 h-4 w-4" />
+                      </Menu.Button>
+                      <Transition
+                        enter="transition ease-out duration-100"
+                        enterFrom="transform opacity-0 scale-95"
+                        enterTo="transform opacity-100 scale-100"
+                        leave="transition ease-in duration-75"
+                        leaveFrom="transform opacity-100 scale-100"
+                        leaveTo="transform opacity-0 scale-95"
                       >
-                        {item.name}
-                      </a>
-                    ))}
-                  </div>
+                        <Menu.Items className="absolute z-10 mt-2 w-48 origin-top-left rounded-md bg-white py-1 shadow-lg focus:outline-none">
+                          {category.items.map((item) => (
+                            <Menu.Item key={item.name}>
+                              {({ active }) => (
+                                <Link
+                                  href={item.href}
+                                  className={classNames(
+                                    active ? "bg-gray-100" : "",
+                                    "block px-4 py-2 text-sm text-gray-700",
+                                  )}
+                                >
+                                  {item.name}
+                                </Link>
+                              )}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Items>
+                      </Transition>
+                    </Menu>
+                  ))}
                 </div>
               </div>
             </div>
@@ -85,21 +93,27 @@ export default function Navbar() {
 
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 px-2 pt-2 pb-3">
-              {navigation.map((item) => (
-                <Disclosure.Button
-                  key={item.name}
-                  as="a"
-                  href={item.href}
-                  className={classNames(
-                    item.current
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white",
-                    "block px-3 py-2 rounded-md text-base font-medium",
-                  )}
-                  aria-current={item.current ? "page" : undefined}
-                >
-                  {item.name}
-                </Disclosure.Button>
+              {categories.map((category) => (
+                <div key={category.title} className="pt-2">
+                  <p className="px-3 py-2 text-sm font-medium text-gray-400">
+                    {category.title}
+                  </p>
+                  {category.items.map((item) => (
+                    <Disclosure.Button
+                      key={item.name}
+                      as="a"
+                      href={item.href}
+                      className={classNames(
+                        pathName === item.href
+                          ? "bg-gray-900 text-white"
+                          : "text-gray-300 hover:bg-gray-700 hover:text-white",
+                        "block px-3 py-2 rounded-md text-base font-medium",
+                      )}
+                    >
+                      {item.name}
+                    </Disclosure.Button>
+                  ))}
+                </div>
               ))}
             </div>
           </Disclosure.Panel>

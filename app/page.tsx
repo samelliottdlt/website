@@ -4,11 +4,11 @@ import "./page.css";
 function Home() {
   return (
     <div className="home-container">
-      <h1>Hello, world.</h1>
+      <h1>Hello, world</h1>
       <Image
         src="/kiki-fly.svg"
         alt="A flying Kiki"
-        className="fixed bottom-2 right-2 w-16"
+        className="absolute bottom-4 right-4 w-16"
         width={500}
         height={500}
       />

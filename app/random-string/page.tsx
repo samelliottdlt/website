@@ -17,77 +17,96 @@ function RandomStringGenerator() {
   // Read initial values from URL params
   const urlLength = Number(searchParams.get("length")) || DEFAULT_LENGTH;
   const urlAllowOverLimit = searchParams.get("allowOverLimit") === "true";
-  
+
   // Initialize states with URL values
   const [length, setLength] = useState(urlLength);
   const [charset, setCharset] = useState(DEFAULT_CHARSET);
   const [result, setResult] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">(
+    "idle",
+  );
   const [allowOverLimit, setAllowOverLimit] = useState(urlAllowOverLimit);
-  
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
 
-  const generateStringWithLength = useCallback(async (targetLength: number) => {
-    // Cancel any ongoing generation
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+  const generateStringWithLength = useCallback(
+    async (targetLength: number) => {
+      // Cancel any ongoing generation
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    
-    setIsGenerating(true);
-    setResult("");
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
-    try {
-      const chars = charset || DEFAULT_CHARSET;
-      const actualLength = allowOverLimit ? targetLength : Math.min(targetLength, MAX_LENGTH);
-      
-      // For very long strings, generate in chunks to prevent UI blocking
-      if (actualLength > CHUNK_SIZE) {
-        let str = "";
-        const chunkSize = CHUNK_SIZE;
-        
-        for (let chunk = 0; chunk < Math.ceil(actualLength / chunkSize); chunk++) {
-          if (controller.signal.aborted) {
-            throw new Error("Generation cancelled");
+      setIsGenerating(true);
+      setResult("");
+
+      try {
+        const chars = charset || DEFAULT_CHARSET;
+        const actualLength = allowOverLimit
+          ? targetLength
+          : Math.min(targetLength, MAX_LENGTH);
+
+        // For very long strings, generate in chunks to prevent UI blocking
+        if (actualLength > CHUNK_SIZE) {
+          let str = "";
+          const chunkSize = CHUNK_SIZE;
+
+          for (
+            let chunk = 0;
+            chunk < Math.ceil(actualLength / chunkSize);
+            chunk++
+          ) {
+            if (controller.signal.aborted) {
+              throw new Error("Generation cancelled");
+            }
+
+            const currentChunkSize = Math.min(
+              chunkSize,
+              actualLength - chunk * chunkSize,
+            );
+            let chunkStr = "";
+
+            for (let i = 0; i < currentChunkSize; i++) {
+              chunkStr += chars.charAt(
+                Math.floor(Math.random() * chars.length),
+              );
+            }
+
+            str += chunkStr;
+
+            // Yield control back to the browser to prevent blocking
+            await new Promise((resolve) => setTimeout(resolve, 0));
           }
-          
-          const currentChunkSize = Math.min(chunkSize, actualLength - chunk * chunkSize);
-          let chunkStr = "";
-          
-          for (let i = 0; i < currentChunkSize; i++) {
-            chunkStr += chars.charAt(Math.floor(Math.random() * chars.length));
+
+          if (!controller.signal.aborted) {
+            setResult(str);
           }
-          
-          str += chunkStr;
-          
-          // Yield control back to the browser to prevent blocking
-          await new Promise(resolve => setTimeout(resolve, 0));
-        }
-        
-        if (!controller.signal.aborted) {
+        } else {
+          // For shorter strings, generate all at once
+          let str = "";
+          for (let i = 0; i < actualLength; i++) {
+            str += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
           setResult(str);
         }
-      } else {
-        // For shorter strings, generate all at once
-        let str = "";
-        for (let i = 0; i < actualLength; i++) {
-          str += chars.charAt(Math.floor(Math.random() * chars.length));
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message !== "Generation cancelled"
+        ) {
+          console.error("Error generating string:", error);
         }
-        setResult(str);
+      } finally {
+        setIsGenerating(false);
+        abortControllerRef.current = null;
       }
-    } catch (error) {
-      if (error instanceof Error && error.message !== "Generation cancelled") {
-        console.error("Error generating string:", error);
-      }
-    } finally {
-      setIsGenerating(false);
-      abortControllerRef.current = null;
-    }
-  }, [charset, allowOverLimit]);
+    },
+    [charset, allowOverLimit],
+  );
 
   const generateString = useCallback(async () => {
     return generateStringWithLength(length);
@@ -106,7 +125,7 @@ function RandomStringGenerator() {
 
   const getUtf8ByteSize = useCallback((str: string) => {
     const bytes = new Blob([str]).size;
-    
+
     if (bytes < 1024) {
       return `${bytes} bytes`;
     } else if (bytes < 1024 * 1024) {
@@ -118,11 +137,14 @@ function RandomStringGenerator() {
     }
   }, []);
 
-  const generateWithPresetLength = useCallback((presetLength: number) => {
-    setLength(presetLength);
-    // Trigger generation with the specific length
-    generateStringWithLength(presetLength);
-  }, [generateStringWithLength]);
+  const generateWithPresetLength = useCallback(
+    (presetLength: number) => {
+      setLength(presetLength);
+      // Trigger generation with the specific length
+      generateStringWithLength(presetLength);
+    },
+    [generateStringWithLength],
+  );
 
   const handleLengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLength = Number(e.target.value) || 0;
@@ -133,12 +155,15 @@ function RandomStringGenerator() {
     }
   };
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      generateString();
-    }
-  }, [generateString]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        generateString();
+      }
+    },
+    [generateString],
+  );
 
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
@@ -147,10 +172,15 @@ function RandomStringGenerator() {
 
   useEffect(() => {
     // Only update URL if values have actually changed from URL params
-    const currentUrlLength = Number(searchParams.get("length")) || DEFAULT_LENGTH;
-    const currentUrlAllowOverLimit = searchParams.get("allowOverLimit") === "true";
-    
-    if (length !== currentUrlLength || allowOverLimit !== currentUrlAllowOverLimit) {
+    const currentUrlLength =
+      Number(searchParams.get("length")) || DEFAULT_LENGTH;
+    const currentUrlAllowOverLimit =
+      searchParams.get("allowOverLimit") === "true";
+
+    if (
+      length !== currentUrlLength ||
+      allowOverLimit !== currentUrlAllowOverLimit
+    ) {
       const params = new URLSearchParams();
       params.set("length", length.toString());
       if (allowOverLimit) {
@@ -179,15 +209,18 @@ function RandomStringGenerator() {
             disabled={isGenerating}
           />
           <span className="ml-2 text-sm text-gray-600">
-            {allowOverLimit ? "(no limit)" : `(max: ${MAX_LENGTH.toLocaleString()})`}
+            {allowOverLimit
+              ? "(no limit)"
+              : `(max: ${MAX_LENGTH.toLocaleString()})`}
           </span>
           {length > MAX_LENGTH && !allowOverLimit && (
             <div className="mt-1 text-sm text-amber-600">
-              ⚠️ Length exceeds recommended limit. Enable &quot;Allow Over Limit&quot; below to proceed.
+              ⚠️ Length exceeds recommended limit. Enable &quot;Allow Over
+              Limit&quot; below to proceed.
             </div>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2">
           <input
             id="allow-over-limit"
@@ -231,7 +264,7 @@ function RandomStringGenerator() {
             (Ctrl/Cmd + Enter)
           </span>
         </div>
-        
+
         <div>
           <label className="block font-medium mb-2">Quick Generate:</label>
           <div className="flex flex-wrap gap-2">
@@ -240,7 +273,9 @@ function RandomStringGenerator() {
                 key={presetLength}
                 type="button"
                 onClick={() => generateWithPresetLength(presetLength)}
-                disabled={isGenerating || (presetLength > MAX_LENGTH && !allowOverLimit)}
+                disabled={
+                  isGenerating || (presetLength > MAX_LENGTH && !allowOverLimit)
+                }
                 className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 {presetLength.toLocaleString()}
@@ -251,7 +286,7 @@ function RandomStringGenerator() {
             ))}
           </div>
         </div>
-        
+
         {result && (
           <div className="mt-4">
             <div className="flex justify-between items-center mb-2">
@@ -260,7 +295,11 @@ function RandomStringGenerator() {
                 onClick={copyToClipboard}
                 className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
               >
-                {copyStatus === "copied" ? "Copied!" : copyStatus === "error" ? "Error" : "Copy"}
+                {copyStatus === "copied"
+                  ? "Copied!"
+                  : copyStatus === "error"
+                    ? "Error"
+                    : "Copy"}
               </button>
             </div>
             <div className="border rounded p-3 bg-gray-50 max-h-64 overflow-auto">
@@ -281,7 +320,14 @@ function RandomStringGenerator() {
 
 export default function RandomStringPage() {
   return (
-    <Suspense fallback={<div className="p-4 max-w-2xl mx-auto"><h1 className="text-2xl font-bold mb-4">Random String Generator</h1><div>Loading...</div></div>}>
+    <Suspense
+      fallback={
+        <div className="p-4 max-w-2xl mx-auto">
+          <h1 className="text-2xl font-bold mb-4">Random String Generator</h1>
+          <div>Loading...</div>
+        </div>
+      }
+    >
       <RandomStringGenerator />
     </Suspense>
   );

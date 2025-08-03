@@ -38,6 +38,7 @@ export const categories: NavigationCategory[] = [
         href: "/string-length",
         emoji: "🔤",
       },
+      { name: "Music Sequencer", href: "/music-sequencer", emoji: "🎶" },
     ],
   },
 ];

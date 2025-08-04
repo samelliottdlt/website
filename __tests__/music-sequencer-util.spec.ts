@@ -17,11 +17,13 @@ describe("music sequencer util", () => {
   });
 
   test("compact encoding is more efficient", () => {
-    // Create a beat with some active notes
+    // Create a beat with some active notes that matches the current structure
     const testBeat: Beat = {
       bpm: 140,
-      synth: Array.from({ length: 12 }, () => Array(NUM_STEPS).fill(false)),
+      synth: Array.from({ length: 24 }, () => Array(NUM_STEPS).fill(false)), // 24 notes for 2 octaves
       drums: Array.from({ length: 3 }, () => Array(NUM_STEPS).fill(false)),
+      rootNote: "C",
+      scale: "chromatic",
     };
 
     // Add a few active notes

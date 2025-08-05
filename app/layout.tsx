@@ -4,6 +4,9 @@ import { Inter } from "next/font/google";
 import Sidebar from "../components/Sidebar";
 
 export const metadata = {
+  metadataBase: new URL(process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}` 
+    : 'http://localhost:3000'),
   title: "Sam's Fun House",
   description: "I just put whatever here",
   icons: {

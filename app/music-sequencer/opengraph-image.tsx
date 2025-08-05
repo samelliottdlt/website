@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { decodeBeat, NUM_STEPS } from "./util";
 
 export const runtime = "edge";
-export const revalidate = 60 * 60 * 24 * 30; // 30 days
+export const revalidate = 2592000; // 30 days (60 * 60 * 24 * 30)
 export const alt = "Music Sequencer thumbnail";
 export const size = {
   width: 1200,

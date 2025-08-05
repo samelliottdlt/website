@@ -13,10 +13,6 @@ fi
 cd wasm
 wasm-pack build --target bundler --out-dir ./pkg --out-name website-wasm
 
-# Copy the generated files to a more convenient location for Next.js
-echo "Moving generated files..."
-cd ..
-
 echo "WebAssembly build complete!"
 echo "Generated files:"
 echo "  - wasm/pkg/website-wasm.wasm (binary)"

@@ -2,19 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryParam } from "../../hooks/useQueryParams";
-import { 
-  Beat, 
-  NUM_STEPS, 
-  defaultBeat, 
-  encodeBeat, 
-  decodeBeat, 
-  beatToCompact, 
-  compactToBeat,
+import {
+  Beat,
+  NUM_STEPS,
+  defaultBeat,
+  encodeBeat,
+  decodeBeat,
   SCALE_NAMES,
   ROOT_NOTES,
   ScaleName,
   getScaleNotes,
-  transposeBeatToScale
+  transposeBeatToScale,
 } from "./util";
 
 const NOTE_NAMES = [
@@ -49,6 +47,21 @@ function noteToFrequency(note: string): number {
 
 const NOTE_FREQUENCIES = SYNTH_NOTES.map(noteToFrequency);
 
+// Helper functions for working with compact beat format
+const isSynthActive = (
+  beat: Beat,
+  noteIndex: number,
+  step: number,
+): boolean => {
+  const encoded = noteIndex * NUM_STEPS + step;
+  return beat.synth.includes(encoded);
+};
+
+const isDrumActive = (beat: Beat, drumIndex: number, step: number): boolean => {
+  const encoded = drumIndex * NUM_STEPS + step;
+  return beat.drums.includes(encoded);
+};
+
 export default function Sequencer() {
   const [encodedBeat, setEncodedBeat] = useQueryParam({
     key: "beat",
@@ -63,8 +76,8 @@ export default function Sequencer() {
   const [showJson, setShowJson] = useState(false);
   const [jsonText, setJsonText] = useState("");
   const [playingNotes, setPlayingNotes] = useState<Set<string>>(new Set());
-   const [urlCopied, setUrlCopied] = useState(false);
-  
+  const [urlCopied, setUrlCopied] = useState(false);
+
   // Initialize scale settings from the loaded beat
   const [selectedScale, setSelectedScale] = useState<ScaleName>(() => {
     const loadedBeat = decodeBeat(encodedBeat);
@@ -90,16 +103,19 @@ export default function Sequencer() {
 
   // Handler for root note changes with transposition
   const handleRootNoteChange = (newRootNote: string) => {
-    const transposedBeat = transposeBeatToScale(beat, newRootNote, selectedScale);
+    const transposedBeat = transposeBeatToScale(
+      beat,
+      newRootNote,
+      selectedScale,
+    );
     const updatedBeat = { ...transposedBeat, rootNote: newRootNote };
     setBeat(updatedBeat);
     setRootNote(newRootNote);
   };
 
   useEffect(() => {
-    // Use compact format for JSON display
-    const compactBeat = beatToCompact(beat);
-    setJsonText(JSON.stringify(compactBeat, null, 2));
+    // Use compact format for JSON display (which is now the only format)
+    setJsonText(JSON.stringify(beat, null, 2));
     setEncodedBeat(encodeBeat(beat));
   }, [beat, setEncodedBeat]);
 
@@ -112,81 +128,91 @@ export default function Sequencer() {
     return audioCtxRef.current;
   }
 
-  const playNote = useCallback((freq: number, noteIndex?: number, step?: number) => {
-    const ctx = getCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "square";
-    osc.frequency.value = freq;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-
-    // Add visual feedback for playing notes - include step for specificity
-    if (noteIndex !== undefined && step !== undefined) {
-      const noteKey = `synth-${noteIndex}-${step}`;
-      setPlayingNotes(prev => new Set(prev).add(noteKey));
-      setTimeout(() => {
-        setPlayingNotes(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(noteKey);
-          return newSet;
-        });
-      }, 200); // Show for 200ms
-    }
-  }, []);
-
-  const playDrum = useCallback((name: string, drumIndex?: number, step?: number) => {
-    const ctx = getCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    if (name === "Kick") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(150, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.5);
-    } else if (name === "Snare") {
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(200, ctx.currentTime);
-    } else {
+  const playNote = useCallback(
+    (freq: number, noteIndex?: number, step?: number) => {
+      const ctx = getCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
       osc.type = "square";
-      osc.frequency.setValueAtTime(400, ctx.currentTime);
-    }
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.2);
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
 
-    // Add visual feedback for playing drums - include step for specificity
-    if (drumIndex !== undefined && step !== undefined) {
-      const drumKey = `drum-${drumIndex}-${step}`;
-      setPlayingNotes(prev => new Set(prev).add(drumKey));
-      setTimeout(() => {
-        setPlayingNotes(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(drumKey);
-          return newSet;
-        });
-      }, 200); // Show for 200ms
-    }
-  }, []);
+      // Add visual feedback for playing notes - include step for specificity
+      if (noteIndex !== undefined && step !== undefined) {
+        const noteKey = `synth-${noteIndex}-${step}`;
+        setPlayingNotes((prev) => new Set(prev).add(noteKey));
+        setTimeout(() => {
+          setPlayingNotes((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(noteKey);
+            return newSet;
+          });
+        }, 200); // Show for 200ms
+      }
+    },
+    [],
+  );
+
+  const playDrum = useCallback(
+    (name: string, drumIndex?: number, step?: number) => {
+      const ctx = getCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      if (name === "Kick") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.5);
+      } else if (name === "Snare") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(200, ctx.currentTime);
+      } else {
+        osc.type = "square";
+        osc.frequency.setValueAtTime(400, ctx.currentTime);
+      }
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+
+      // Add visual feedback for playing drums - include step for specificity
+      if (drumIndex !== undefined && step !== undefined) {
+        const drumKey = `drum-${drumIndex}-${step}`;
+        setPlayingNotes((prev) => new Set(prev).add(drumKey));
+        setTimeout(() => {
+          setPlayingNotes((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(drumKey);
+            return newSet;
+          });
+        }, 200); // Show for 200ms
+      }
+    },
+    [],
+  );
 
   const toggleSynth = (noteIndex: number, step: number) => {
     setBeat((prev) => {
-      const synth = prev.synth.map((row) => row.slice());
-      synth[noteIndex][step] = !synth[noteIndex][step];
+      const encoded = noteIndex * NUM_STEPS + step;
+      const synth = prev.synth.includes(encoded)
+        ? prev.synth.filter((s) => s !== encoded)
+        : [...prev.synth, encoded];
       return { ...prev, synth };
     });
   };
 
   const toggleDrum = (drumIndex: number, step: number) => {
     setBeat((prev) => {
-      const drums = prev.drums.map((row) => row.slice());
-      drums[drumIndex][step] = !drums[drumIndex][step];
+      const encoded = drumIndex * NUM_STEPS + step;
+      const drums = prev.drums.includes(encoded)
+        ? prev.drums.filter((d) => d !== encoded)
+        : [...prev.drums, encoded];
       return { ...prev, drums };
     });
   };
@@ -202,13 +228,21 @@ export default function Sequencer() {
 
   useEffect(() => {
     if (!isPlaying) return;
-    beat.synth.forEach((row, noteIndex) => {
-      if (row[currentStep]) {
+
+    // Check synth notes for current step
+    beat.synth.forEach((encoded) => {
+      const noteIndex = Math.floor(encoded / NUM_STEPS);
+      const step = encoded % NUM_STEPS;
+      if (step === currentStep && noteIndex >= 0 && noteIndex < 24) {
         playNote(NOTE_FREQUENCIES[noteIndex], noteIndex, currentStep);
       }
     });
-    beat.drums.forEach((row, drumIndex) => {
-      if (row[currentStep]) {
+
+    // Check drum hits for current step
+    beat.drums.forEach((encoded) => {
+      const drumIndex = Math.floor(encoded / NUM_STEPS);
+      const step = encoded % NUM_STEPS;
+      if (step === currentStep && drumIndex >= 0 && drumIndex < 3) {
         playDrum(DRUMS[drumIndex], drumIndex, currentStep);
       }
     });
@@ -242,20 +276,18 @@ export default function Sequencer() {
   const applyJson = () => {
     try {
       const parsed = JSON.parse(jsonText);
-      
-      let newBeat: Beat;
-      // Check if it's already a compact format
-      if (parsed.synth && Array.isArray(parsed.synth) && 
-          (parsed.synth.length === 0 || typeof parsed.synth[0] === 'number')) {
-        // It's compact format, convert to full Beat
-        newBeat = compactToBeat(parsed);
-      } else {
-        // It's full Beat format, use as-is
-        newBeat = parsed as Beat;
-      }
-      
+
+      // Ensure the parsed object matches the Beat interface
+      const newBeat: Beat = {
+        bpm: parsed.bpm || 120,
+        synth: parsed.synth || [],
+        drums: parsed.drums || [],
+        rootNote: parsed.rootNote || "C",
+        scale: parsed.scale || "chromatic",
+      };
+
       setBeat(newBeat);
-      
+
       // Update UI state to match the loaded beat
       if (newBeat.rootNote) {
         setRootNote(newBeat.rootNote);
@@ -277,7 +309,7 @@ export default function Sequencer() {
         setUrlCopied(false);
       }, 2000);
     } catch (error) {
-      console.error('Failed to copy URL:', error);
+      console.error("Failed to copy URL:", error);
       // You could add error feedback here if needed
     }
   };
@@ -285,8 +317,8 @@ export default function Sequencer() {
   const clearGrid = () => {
     setBeat((prev) => ({
       ...prev,
-      synth: Array.from({ length: 24 }, () => Array(NUM_STEPS).fill(false)), // 24 notes for 2 octaves
-      drums: Array.from({ length: 3 }, () => Array(NUM_STEPS).fill(false)),
+      synth: [],
+      drums: [],
       // Preserve scale settings when clearing
       rootNote: prev.rootNote || "C",
       scale: prev.scale || "chromatic",
@@ -296,7 +328,7 @@ export default function Sequencer() {
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold text-center">Music Sequencer</h1>
-      
+
       {/* Scale Selection */}
       <div className="flex justify-center">
         <div className="flex flex-wrap items-center justify-center gap-6 p-4 bg-gray-50 rounded-lg">
@@ -317,7 +349,7 @@ export default function Sequencer() {
               ))}
             </select>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <label htmlFor="scale" className="text-sm font-medium">
               Scale:
@@ -335,12 +367,11 @@ export default function Sequencer() {
               ))}
             </select>
           </div>
-          
+
           <div className="text-xs text-gray-600">
-            {selectedScale === "chromatic" 
-              ? "Showing all notes" 
-              : `Showing ${visibleNoteIndices.length} notes in ${SCALE_NAMES[selectedScale]} scale`
-            }
+            {selectedScale === "chromatic"
+              ? "Showing all notes"
+              : `Showing ${visibleNoteIndices.length} notes in ${SCALE_NAMES[selectedScale]} scale`}
           </div>
         </div>
       </div>
@@ -367,8 +398,8 @@ export default function Sequencer() {
         <button
           onClick={copyUrl}
           className={`px-4 py-2 text-white rounded cursor-pointer transition-colors duration-200 ${
-            urlCopied 
-              ? "bg-green-600 hover:bg-green-700" 
+            urlCopied
+              ? "bg-green-600 hover:bg-green-700"
               : "bg-gray-600 hover:bg-gray-700"
           }`}
         >
@@ -394,41 +425,45 @@ export default function Sequencer() {
         <div className="flex justify-center">
           <div className="overflow-x-auto">
             <table className="border-collapse">
-            <tbody>
-              {visibleNoteIndices.map((noteIndex) => {
-                const row = beat.synth[noteIndex];
-                return (
-                  <tr key={noteIndex} className="group">
-                    <td className="pr-3 text-right text-sm font-medium text-gray-700 group-hover:text-blue-600 group-hover:font-bold transition-colors duration-150 min-w-[3rem]">
-                      {SYNTH_NOTES[noteIndex]}
-                    </td>
-                    {row.map((active, step) => {
-                      const isCurrentStep = isPlaying && step === currentStep;
-                      const isPlayingNote = playingNotes.has(`synth-${noteIndex}-${step}`);
-                      
-                      return (
-                        <td
-                          key={step}
-                          onClick={() => toggleSynth(noteIndex, step)}
-                          className={`w-10 h-10 border-2 cursor-pointer transition-all duration-150 hover:border-blue-400 hover:shadow-md ${
-                            active ? "bg-blue-500 hover:bg-blue-600" : "bg-white hover:bg-blue-50"
-                          } ${
-                            isCurrentStep
-                              ? "border-orange-400 shadow-lg bg-orange-100"
-                              : "border-gray-300"
-                          } ${
-                            isPlayingNote && active
-                              ? "bg-yellow-300 ring-2 ring-yellow-400"
-                              : ""
-                          }`}
-                        ></td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              <tbody>
+                {visibleNoteIndices.map((noteIndex) => {
+                  return (
+                    <tr key={noteIndex} className="group">
+                      <td className="pr-3 text-right text-sm font-medium text-gray-700 group-hover:text-blue-600 group-hover:font-bold transition-colors duration-150 min-w-[3rem]">
+                        {SYNTH_NOTES[noteIndex]}
+                      </td>
+                      {Array.from({ length: NUM_STEPS }, (_, step) => {
+                        const active = isSynthActive(beat, noteIndex, step);
+                        const isCurrentStep = isPlaying && step === currentStep;
+                        const isPlayingNote = playingNotes.has(
+                          `synth-${noteIndex}-${step}`,
+                        );
+
+                        return (
+                          <td
+                            key={step}
+                            onClick={() => toggleSynth(noteIndex, step)}
+                            className={`w-10 h-10 border-2 cursor-pointer transition-all duration-150 hover:border-blue-400 hover:shadow-md ${
+                              active
+                                ? "bg-blue-500 hover:bg-blue-600"
+                                : "bg-white hover:bg-blue-50"
+                            } ${
+                              isCurrentStep
+                                ? "border-orange-400 shadow-lg bg-orange-100"
+                                : "border-gray-300"
+                            } ${
+                              isPlayingNote && active
+                                ? "bg-yellow-300 ring-2 ring-yellow-400"
+                                : ""
+                            }`}
+                          ></td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -439,38 +474,43 @@ export default function Sequencer() {
         <div className="flex justify-center">
           <div className="overflow-x-auto">
             <table className="border-collapse">
-            <tbody>
-              {beat.drums.map((row, drumIndex) => (
-                <tr key={drumIndex} className="group">
-                  <td className="pr-3 text-right text-sm font-medium text-gray-700 group-hover:text-green-600 group-hover:font-bold transition-colors duration-150 min-w-[3rem]">
-                    {DRUMS[drumIndex]}
-                  </td>
-                  {row.map((active, step) => {
-                    const isCurrentStep = isPlaying && step === currentStep;
-                    const isPlayingDrum = playingNotes.has(`drum-${drumIndex}-${step}`);
-                    
-                    return (
-                      <td
-                        key={step}
-                        onClick={() => toggleDrum(drumIndex, step)}
-                        className={`w-10 h-10 border-2 cursor-pointer transition-all duration-150 hover:border-green-400 hover:shadow-md ${
-                          active ? "bg-green-500 hover:bg-green-600" : "bg-white hover:bg-green-50"
-                        } ${
-                          isCurrentStep
-                            ? "border-orange-400 shadow-lg bg-orange-100"
-                            : "border-gray-300"
-                        } ${
-                          isPlayingDrum && active
-                            ? "bg-yellow-300 ring-2 ring-yellow-400"
-                            : ""
-                        }`}
-                      ></td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              <tbody>
+                {DRUMS.map((drumName, drumIndex) => (
+                  <tr key={drumIndex} className="group">
+                    <td className="pr-3 text-right text-sm font-medium text-gray-700 group-hover:text-green-600 group-hover:font-bold transition-colors duration-150 min-w-[3rem]">
+                      {drumName}
+                    </td>
+                    {Array.from({ length: NUM_STEPS }, (_, step) => {
+                      const active = isDrumActive(beat, drumIndex, step);
+                      const isCurrentStep = isPlaying && step === currentStep;
+                      const isPlayingDrum = playingNotes.has(
+                        `drum-${drumIndex}-${step}`,
+                      );
+
+                      return (
+                        <td
+                          key={step}
+                          onClick={() => toggleDrum(drumIndex, step)}
+                          className={`w-10 h-10 border-2 cursor-pointer transition-all duration-150 hover:border-green-400 hover:shadow-md ${
+                            active
+                              ? "bg-green-500 hover:bg-green-600"
+                              : "bg-white hover:bg-green-50"
+                          } ${
+                            isCurrentStep
+                              ? "border-orange-400 shadow-lg bg-orange-100"
+                              : "border-gray-300"
+                          } ${
+                            isPlayingDrum && active
+                              ? "bg-yellow-300 ring-2 ring-yellow-400"
+                              : ""
+                          }`}
+                        ></td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useQueryParam } from "../../hooks/useQueryParams";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Beat,
   NUM_STEPS,
-  defaultBeat,
   encodeBeat,
   decodeBeat,
   SCALE_NAMES,
@@ -63,14 +62,15 @@ const isDrumActive = (beat: Beat, drumIndex: number, step: number): boolean => {
 };
 
 export default function Sequencer() {
-  const [encodedBeat, setEncodedBeat] = useQueryParam({
-    key: "beat",
-    defaultValue: encodeBeat(defaultBeat),
-    serialize: (v: string) => v,
-    deserialize: (v: string | null) => v || encodeBeat(defaultBeat),
-  });
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [beat, setBeat] = useState<Beat>(() => decodeBeat(encodedBeat));
+  const initialBeatRef = useRef<Beat>();
+  if (!initialBeatRef.current) {
+    initialBeatRef.current = decodeBeat(searchParams);
+  }
+
+  const [beat, setBeat] = useState<Beat>(initialBeatRef.current);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showJson, setShowJson] = useState(false);
@@ -79,14 +79,12 @@ export default function Sequencer() {
   const [urlCopied, setUrlCopied] = useState(false);
 
   // Initialize scale settings from the loaded beat
-  const [selectedScale, setSelectedScale] = useState<ScaleName>(() => {
-    const loadedBeat = decodeBeat(encodedBeat);
-    return loadedBeat.scale || "chromatic";
-  });
-  const [rootNote, setRootNote] = useState(() => {
-    const loadedBeat = decodeBeat(encodedBeat);
-    return loadedBeat.rootNote || "C";
-  });
+  const [selectedScale, setSelectedScale] = useState<ScaleName>(
+    initialBeatRef.current.scale || "chromatic",
+  );
+  const [rootNote, setRootNote] = useState(
+    initialBeatRef.current.rootNote || "C",
+  );
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -114,10 +112,15 @@ export default function Sequencer() {
   };
 
   useEffect(() => {
-    // Use compact format for JSON display (which is now the only format)
     setJsonText(JSON.stringify(beat, null, 2));
-    setEncodedBeat(encodeBeat(beat));
-  }, [beat, setEncodedBeat]);
+    const encoded = encodeBeat(beat);
+    const current = searchParams.toString();
+    if (encoded !== current) {
+      router.replace(encoded ? `?${encoded}` : window.location.pathname, {
+        scroll: false,
+      });
+    }
+  }, [beat, router, searchParams]);
 
   function getCtx(): AudioContext {
     if (!audioCtxRef.current) {

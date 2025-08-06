@@ -144,34 +144,66 @@ export const defaultBeat: Beat = {
 };
 
 export function encodeBeat(beat: Beat): string {
-  const json = JSON.stringify(beat);
-  if (typeof btoa === "function") {
-    return btoa(json);
-  }
-  // Node.js fallback
-  return Buffer.from(json, "utf8").toString("base64");
+  const params = new URLSearchParams();
+  if (beat.bpm !== 120) params.set("bpm", beat.bpm.toString());
+  if (beat.rootNote && beat.rootNote !== "C")
+    params.set("rootNote", beat.rootNote);
+  if (beat.scale && beat.scale !== "chromatic") params.set("scale", beat.scale);
+  if (beat.synth.length) params.set("synth", beat.synth.join(","));
+  if (beat.drums.length) params.set("drums", beat.drums.join(","));
+  return params.toString();
 }
 
-export function decodeBeat(str: string | null): Beat {
-  if (!str) return defaultBeat;
+type SearchParamsLike = {
+  get(name: string): string | null;
+};
 
-  try {
-    const json =
-      typeof atob === "function"
-        ? atob(str)
-        : Buffer.from(str, "base64").toString("utf8");
-
-    const beat = JSON.parse(json) as Beat;
-
-    // Ensure defaults for optional properties
-    return {
-      bpm: beat.bpm || 120,
-      synth: beat.synth || [],
-      drums: beat.drums || [],
-      rootNote: beat.rootNote || "C",
-      scale: beat.scale || "chromatic",
-    };
-  } catch {
-    return defaultBeat;
+function decodeBeatFromParams(params: SearchParamsLike): Beat {
+  const legacy = params.get("beat");
+  if (legacy) {
+    return decodeBeat(legacy);
   }
+
+  const parseArray = (value: string | null): number[] =>
+    value
+      ? value
+          .split(",")
+          .map((n) => parseInt(n, 10))
+          .filter((n) => !Number.isNaN(n))
+      : [];
+
+  return {
+    bpm: Number(params.get("bpm")) || 120,
+    synth: parseArray(params.get("synth")),
+    drums: parseArray(params.get("drums")),
+    rootNote: params.get("rootNote") || "C",
+    scale: (params.get("scale") as ScaleName) || "chromatic",
+  };
+}
+
+export function decodeBeat(
+  input: string | SearchParamsLike | null,
+): Beat {
+  if (!input) return defaultBeat;
+
+  if (typeof input === "string") {
+    try {
+      const json =
+        typeof atob === "function"
+          ? atob(input)
+          : Buffer.from(input, "base64").toString("utf8");
+      const beat = JSON.parse(json) as Beat;
+      return {
+        bpm: beat.bpm || 120,
+        synth: beat.synth || [],
+        drums: beat.drums || [],
+        rootNote: beat.rootNote || "C",
+        scale: beat.scale || "chromatic",
+      };
+    } catch {
+      return decodeBeatFromParams(new URLSearchParams(input));
+    }
+  }
+
+  return decodeBeatFromParams(input);
 }

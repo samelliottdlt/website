@@ -12,6 +12,15 @@ describe("music sequencer util", () => {
     expect(decodeBeat(encoded)).toEqual(defaultBeat);
   });
 
+  test("decodes legacy encoded beat", () => {
+    const legacy = Buffer.from(JSON.stringify(defaultBeat), "utf8").toString(
+      "base64",
+    );
+    const params = new URLSearchParams();
+    params.set("beat", legacy);
+    expect(decodeBeat(params)).toEqual(defaultBeat);
+  });
+
   test("invalid decode returns default", () => {
     expect(decodeBeat("not-base64")).toEqual(defaultBeat);
   });
@@ -39,7 +48,6 @@ describe("music sequencer util", () => {
     expect(decoded).toEqual(testBeat);
 
     // The encoded string should be much shorter than the old format
-    // (The old format would be ~1000+ characters, new should be <200)
     expect(encoded.length).toBeLessThan(200);
   });
 
@@ -48,7 +56,7 @@ describe("music sequencer util", () => {
     const decoded = decodeBeat(encoded);
 
     expect(decoded).toEqual(defaultBeat);
-    // Empty beat should be very short
-    expect(encoded.length).toBeLessThan(100);
+    // Empty beat should produce no query params
+    expect(encoded).toBe("");
   });
 });

@@ -65,10 +65,7 @@ export default function Sequencer() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialBeatRef = useRef<Beat>();
-  if (!initialBeatRef.current) {
-    initialBeatRef.current = decodeBeat(searchParams);
-  }
+  const initialBeatRef = useRef<Beat>(decodeBeat(searchParams));
 
   const [beat, setBeat] = useState<Beat>(initialBeatRef.current);
   const [isPlaying, setIsPlaying] = useState(false);

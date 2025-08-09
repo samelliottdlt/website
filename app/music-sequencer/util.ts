@@ -137,40 +137,27 @@ export const NUM_STEPS = 16;
 
 export const defaultBeat: Beat = {
   bpm: 120,
-  synth: [], // Empty array for no active notes
-  drums: [], // Empty array for no active drums
+  synth: [0, 83, 125, 198, 249, 318, 363],
+  drums: [0, 4, 12, 24, 25, 26, 27],
   rootNote: "C",
-  scale: "chromatic",
+  scale: "pentatonic_minor",
 };
 
 export function encodeBeat(beat: Beat): string {
   const params = new URLSearchParams();
-  if (beat.bpm !== 120) params.set("bpm", beat.bpm.toString());
-  if (beat.rootNote && beat.rootNote !== "C")
-    params.set("rootNote", beat.rootNote);
+  params.set("bpm", beat.bpm.toString());
+  if (beat.rootNote) params.set("rootNote", beat.rootNote);
   if (beat.scale && beat.scale !== "chromatic") params.set("scale", beat.scale);
   if (beat.synth.length) params.set("synth", beat.synth.join(","));
   if (beat.drums.length) params.set("drums", beat.drums.join(","));
   return params.toString();
 }
 
-type SearchParamsLike = {
-  get(name: string): string | null;
-};
-
-function decodeBeatFromParams(params: SearchParamsLike): Beat {
+function decodeBeatFromParams(params: URLSearchParams): Beat {
   const legacy = params.get("beat");
-  if (legacy) {
-    return decodeBeat(legacy);
-  }
+  if (legacy) return decodeLegacyBeat(legacy);
 
-  const parseArray = (value: string | null): number[] =>
-    value
-      ? value
-          .split(",")
-          .map((n) => parseInt(n, 10))
-          .filter((n) => !Number.isNaN(n))
-      : [];
+  if (params.size === 0) return defaultBeat;
 
   return {
     bpm: Number(params.get("bpm")) || 120,
@@ -181,29 +168,40 @@ function decodeBeatFromParams(params: SearchParamsLike): Beat {
   };
 }
 
-export function decodeBeat(
-  input: string | SearchParamsLike | null,
-): Beat {
+function parseArray(value: string | null): number[] {
+  return value
+    ? value
+        .split(",")
+        .map((n) => parseInt(n, 10))
+        .filter((n) => !Number.isNaN(n))
+    : [];
+}
+
+export function decodeBeat(input: string | URLSearchParams | null): Beat {
   if (!input) return defaultBeat;
 
-  if (typeof input === "string") {
-    try {
-      const json =
-        typeof atob === "function"
-          ? atob(input)
-          : Buffer.from(input, "base64").toString("utf8");
-      const beat = JSON.parse(json) as Beat;
-      return {
-        bpm: beat.bpm || 120,
-        synth: beat.synth || [],
-        drums: beat.drums || [],
-        rootNote: beat.rootNote || "C",
-        scale: beat.scale || "chromatic",
-      };
-    } catch {
-      return decodeBeatFromParams(new URLSearchParams(input));
-    }
+  if (input instanceof URLSearchParams) {
+    return decodeBeatFromParams(input);
   }
 
-  return decodeBeatFromParams(input);
+  return defaultBeat;
+}
+
+function decodeLegacyBeat(input: string): Beat {
+  try {
+    const json =
+      typeof atob === "function"
+        ? atob(input)
+        : Buffer.from(input, "base64").toString("utf8");
+    const beat = JSON.parse(json) as Beat;
+    return {
+      bpm: beat.bpm || 120,
+      synth: beat.synth || [],
+      drums: beat.drums || [],
+      rootNote: beat.rootNote || "C",
+      scale: beat.scale || "chromatic",
+    };
+  } catch {
+    return defaultBeat;
+  }
 }

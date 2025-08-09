@@ -12,6 +12,15 @@ describe("music sequencer util", () => {
     expect(decodeBeat(encoded)).toEqual(defaultBeat);
   });
 
+  test("decodes legacy encoded beat", () => {
+    const legacy = Buffer.from(JSON.stringify(defaultBeat), "utf8").toString(
+      "base64",
+    );
+    const params = new URLSearchParams();
+    params.set("beat", legacy);
+    expect(decodeBeat(params)).toEqual(defaultBeat);
+  });
+
   test("invalid decode returns default", () => {
     expect(decodeBeat("not-base64")).toEqual(defaultBeat);
   });
@@ -33,13 +42,12 @@ describe("music sequencer util", () => {
     };
 
     const encoded = encodeBeat(testBeat);
-    const decoded = decodeBeat(encoded);
+    const decoded = decodeBeat(new URLSearchParams(encoded));
 
     // Should decode correctly
     expect(decoded).toEqual(testBeat);
 
     // The encoded string should be much shorter than the old format
-    // (The old format would be ~1000+ characters, new should be <200)
     expect(encoded.length).toBeLessThan(200);
   });
 
@@ -48,7 +56,9 @@ describe("music sequencer util", () => {
     const decoded = decodeBeat(encoded);
 
     expect(decoded).toEqual(defaultBeat);
-    // Empty beat should be very short
-    expect(encoded.length).toBeLessThan(100);
+    // Empty beat should return the default beat
+    expect(encoded).toBe(
+      "bpm=120&rootNote=C&scale=pentatonic_minor&synth=0%2C83%2C125%2C198%2C249%2C318%2C363&drums=0%2C4%2C12%2C24%2C25%2C26%2C27",
+    );
   });
 });

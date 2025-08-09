@@ -40,7 +40,7 @@ export const categories: NavigationCategory[] = [
       },
       {
         name: "Sequencer",
-        href: "/music-sequencer?beat=eyJicG0iOjEyMCwic3ludGgiOlswLDgzLDEyNSwxOTgsMjQ5LDMxOCwzNjNdLCJkcnVtcyI6WzAsNCwxMiwyNCwyNSwyNiwyN10sInJvb3ROb3RlIjoiQyIsInNjYWxlIjoicGVudGF0b25pY19taW5vciJ9",
+        href: "/music-sequencer",
         emoji: "🎶",
       },
     ],

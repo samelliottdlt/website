@@ -184,6 +184,10 @@ export function decodeBeat(input: string | URLSearchParams | null): Beat {
     return decodeBeatFromParams(input);
   }
 
+  if (typeof input === "string") {
+    return decodeLegacyBeat(input);
+  }
+
   return defaultBeat;
 }
 

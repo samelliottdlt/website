@@ -42,7 +42,7 @@ describe("music sequencer util", () => {
     };
 
     const encoded = encodeBeat(testBeat);
-    const decoded = decodeBeat(encoded);
+    const decoded = decodeBeat(new URLSearchParams(encoded));
 
     // Should decode correctly
     expect(decoded).toEqual(testBeat);
@@ -56,7 +56,9 @@ describe("music sequencer util", () => {
     const decoded = decodeBeat(encoded);
 
     expect(decoded).toEqual(defaultBeat);
-    // Empty beat should produce no query params
-    expect(encoded).toBe("");
+    // Empty beat should return the default beat
+    expect(encoded).toBe(
+      "bpm=120&rootNote=C&scale=pentatonic_minor&synth=0%2C83%2C125%2C198%2C249%2C318%2C363&drums=0%2C4%2C12%2C24%2C25%2C26%2C27",
+    );
   });
 });

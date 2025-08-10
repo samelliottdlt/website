@@ -137,33 +137,67 @@ export const NUM_STEPS = 16;
 
 export const defaultBeat: Beat = {
   bpm: 120,
-  synth: [], // Empty array for no active notes
-  drums: [], // Empty array for no active drums
+  synth: [0, 83, 125, 198, 249, 318, 363],
+  drums: [0, 4, 12, 24, 25, 26, 27],
   rootNote: "C",
-  scale: "chromatic",
+  scale: "pentatonic_minor",
 };
 
 export function encodeBeat(beat: Beat): string {
-  const json = JSON.stringify(beat);
-  if (typeof btoa === "function") {
-    return btoa(json);
-  }
-  // Node.js fallback
-  return Buffer.from(json, "utf8").toString("base64");
+  const params = new URLSearchParams();
+  params.set("bpm", beat.bpm.toString());
+  if (beat.rootNote) params.set("rootNote", beat.rootNote);
+  if (beat.scale && beat.scale !== "chromatic") params.set("scale", beat.scale);
+  if (beat.synth.length) params.set("synth", beat.synth.join(","));
+  if (beat.drums.length) params.set("drums", beat.drums.join(","));
+  return params.toString();
 }
 
-export function decodeBeat(str: string | null): Beat {
-  if (!str) return defaultBeat;
+function decodeBeatFromParams(params: URLSearchParams): Beat {
+  const legacy = params.get("beat");
+  if (legacy) return decodeLegacyBeat(legacy);
 
+  if (params.size === 0) return defaultBeat;
+
+  return {
+    bpm: Number(params.get("bpm")) || 120,
+    synth: parseArray(params.get("synth")),
+    drums: parseArray(params.get("drums")),
+    rootNote: params.get("rootNote") || "C",
+    scale: (params.get("scale") as ScaleName) || "chromatic",
+  };
+}
+
+function parseArray(value: string | null): number[] {
+  return value
+    ? value
+        .split(",")
+        .map((n) => parseInt(n, 10))
+        .filter((n) => !Number.isNaN(n))
+    : [];
+}
+
+export function decodeBeat(input: string | URLSearchParams | null): Beat {
+  if (!input) return defaultBeat;
+
+  if (input instanceof URLSearchParams) {
+    return decodeBeatFromParams(input);
+  }
+
+  if (typeof input === "string") {
+    return decodeLegacyBeat(input);
+  }
+
+  return defaultBeat;
+}
+
+function decodeLegacyBeat(input: string): Beat {
   try {
     const json =
       typeof atob === "function"
-        ? atob(str)
-        : Buffer.from(str, "base64").toString("utf8");
-
+        ? atob(input)
+        : Buffer.from(input, "base64").toString("utf8");
     const beat = JSON.parse(json) as Beat;
-
-    // Ensure defaults for optional properties
     return {
       bpm: beat.bpm || 120,
       synth: beat.synth || [],

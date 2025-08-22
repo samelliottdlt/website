@@ -27,6 +27,11 @@ export const categories: NavigationCategory[] = [
         href: "/smoothie-calculator",
         emoji: "🥤",
       },
+      {
+        name: "Wordle Art",
+        href: "/wordle-art",
+        emoji: "🟩",
+      },
     ],
   },
   {

@@ -61,7 +61,7 @@
     "ts-node": "^10.9.2",
     "typescript": "~5.9.2",
     "unified": "^11.0.5",
-    "vercel": "^44.5.0"
+    "vercel": "^48.2.0"
   },
   "browserslist": [
     "last 1 version",

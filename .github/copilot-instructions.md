@@ -1,121 +1,62 @@
-# Project Overview
+# Copilot Instructions
 
-This is a personal website that serves as a portfolio and houses various miscellaneous side projects and interactive tools on whatever I find interesting, useful, or cool. The site is built with modern React/Next.js practices and hosts several diverse projects including calculators, games, utilities, and a blog system.
+## Project Overview
+
+Personal portfolio website built with Next.js 15+ (App Router), React 19, TypeScript, and Tailwind CSS 4+. Hosts interactive side projects (calculators, games, utilities) and an MDX-powered blog.
+
+## Tech Stack
+
+- **Framework**: Next.js 15+ with App Router
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS 4+ (utility classes only, avoid custom CSS)
+- **UI**: Headless UI, Heroicons
+- **Content**: MDX with gray-matter frontmatter, rehype-highlight for syntax highlighting
+- **Testing**: Jest with ts-jest
+- **Code Quality**: ESLint, Prettier
 
 ## Repository Structure
 
-- `/app/`: Next.js App Router pages and components using the new app directory structure
-  - `layout.tsx`: Root layout with navigation and analytics
-  - `page.tsx`: Homepage with simple greeting and decorative elements
-  - `about-me/`: Personal information and bio page
-  - `blog/`: MDX-powered blog system with syntax highlighting and post management
-  - **Project directories**: Each tool/calculator/game lives in its own directory (e.g., `fusion-calculator/`, `smoothie-calculator/`). New projects should follow this pattern with kebab-case naming.
-- `/components/`: Reusable React components (PascalCase naming)
-- `/hooks/`: Custom React hooks for shared stateful logic (camelCase naming)
-- `/posts/`: MDX blog posts with frontmatter
-- `/lib/`: Shared utility functions
-- `/styles/`: Global CSS and styling
-- `/public/`: Static assets including favicon variants and SVG illustrations
-- `/__tests__/`: Jest test files
+- `app/` — Pages and route-specific components (App Router)
+- `components/` — Reusable React components (PascalCase)
+- `hooks/` — Custom React hooks (camelCase, `use` prefix)
+- `lib/` — Shared utilities (only truly general-purpose code)
+- `posts/` — MDX blog posts with YAML frontmatter
+- `styles/` — Global CSS
+- `__tests__/` — Jest tests (`*.spec.ts`)
 
-## Project Types and Patterns
+## Conventions
 
-This site hosts various types of interactive projects:
+### Naming
 
-- **Calculators**: Tools that help users compute or determine something (fusion calculator, smoothie calculator)
-- **Games**: Interactive entertainment projects
-- **Utilities**: Simple tools for generating or manipulating data (random string generator)
-- **Informational**: Pages that display curated content (game of the year)
+- **Directories/routes**: kebab-case (`fusion-calculator`, `game-of-the-year`)
+- **Components**: PascalCase (`Navbar.tsx`, `Alert.tsx`)
+- **Utilities/hooks**: camelCase (`util.ts`, `useLocalStorage.ts`)
+- **Data files**: kebab-case JSON (`card.json`, `ingredients.json`)
 
-When adding new projects, follow the established pattern of creating a dedicated directory under `/app/` with:
+### Components
 
-- `page.tsx`: Main component (prefer server components; push interactivity to leaf components)
-- `util.ts`: Project-specific logic and calculations (colocate with usage when possible)
-- Data files in JSON format (if needed)
+- Server components by default; push `"use client"` to leaf components
+- Functional components with hooks
+- Type props with TypeScript `type` (prefer over `interface`)
+- Use `<>` fragments over unnecessary wrapper divs
 
-## Technology Stack
+### Code Organization
 
-- **Framework**: Next.js 15+ with App Router
-- **Language**: TypeScript with strict type checking
-- **Styling**: Tailwind CSS 4+
-- **Content**: MDX for blog posts with gray-matter for frontmatter parsing
-- **UI Components**: Headless UI for accessible components
-- **Icons**: Heroicons for consistent iconography
-- **Testing**: Jest with TypeScript support
-- **Code Quality**: ESLint, Prettier, and TypeScript for code consistency
+- Colocate utilities with their page/feature
+- Only move to `lib/` if used across multiple pages
+- New projects go in `app/<project-name>/` with `page.tsx`, optional `util.ts`, and data files
 
-## Coding Standards and Conventions
+### Testing
 
-- Use TypeScript for all new code with proper type definitions
-- Follow Next.js App Router conventions (server/client components)
-- Use functional components with React hooks
-- Use Tailwind CSS classes for styling (avoid custom CSS when possible)
-- Component names should be PascalCase
-- File names should match component names
-- Use ESLint and Prettier for code quality and formatting.
-  - **ESLint**: A linting tool that checks for code errors and enforces coding standards. It runs automatically before builds.
-  - **Prettier**: A code formatter that ensures consistent styling. It must be run manually, typically before committing changes.
-- Write meaningful component and function names
-- Use proper TypeScript interfaces or types (prefer types) for props and data structures
-- Prefer small and composable functions that can be reused
-- Prefer to create reusable hooks and place them in the hooks folder when possible
-
-## File and Directory Naming
-
-- Pages use kebab-case for URLs (`fusion-calculator`, `game-of-the-year`)
-- Components use PascalCase (`Navbar.tsx`, `YoutubeEmbed.tsx`)
-- Utility files use camelCase (`util.ts`, `parser.tsx`)
-- JSON data files use kebab-case (`card.json`, `ingredients.json`)
-
-## Component Patterns
-
-- Server components by default for static content and data fetching
-- Push "use client" directive to the edges of the component tree to maximize server-side rendering
-- Keep top-level pages as server components when possible; move interactivity to leaf components
-- Props should be properly typed with TypeScript interfaces
-- Use React.Fragment or `<>` for multiple elements without wrapper divs
-- Implement proper error boundaries and loading states
-
-## Code Organization
-
-- Colocate utility functions with their usage when possible
-- Move utility functions to `/lib/` only for very general-purpose functions that can be used across multiple pages
-- Prefer project-specific utility files over populating a single generic util file
-
-## Data and State Management
-
-- Lean towards using local state management with useState and useReducer hooks
-- JSON files for static data (cards, ingredients, game data)
-- MDX with frontmatter for blog content
-- Use useMemo for expensive calculations
-
-## Styling Guidelines
-
-- Tailwind CSS utility classes for all styling
-- Responsive design using Tailwind's responsive prefixes
-- Consistent spacing and color schemes
-- Dark/light mode considerations (check existing implementations)
-
-## Testing
-
-- Jest configuration with TypeScript support
-- Test files in `__tests__/` directory with `.spec.ts` extension
-- Write unit tests for core logic and complex calculations of any new additions
-- Focus on testing utility functions and business logic
-- Use meaningful test descriptions and assertions
+- Unit tests for core logic and calculations in `__tests__/*.spec.ts`
 - Test edge cases and error conditions
+- Run with `npm run test`
 
-## Development Workflow
+## Commands
 
-- `npm run dev`: Start development server with hot reload
-- `npm run build`: Production build (includes automatic linting)
-- `npm run lint`: Run ESLint checks
-- `npm run prettier`: Check code formatting
-- `npm run test`: Run Jest test suite
-- Vercel deployment for production hosting
-
-## Performance Considerations
-
-- Implement proper loading states for dynamic content
-- Use React.memo for expensive re-renders when appropriate
-- Consider code splitting for large interactive components
+- `npm run dev` — Dev server
+- `npm run build` — Build (auto-lints first)
+- `npm run lint` — ESLint
+- `npm run prettier` — Check formatting
+- `npm run prettier:fix` — Fix formatting
+- `npm run test` — Run tests

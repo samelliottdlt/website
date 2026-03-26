@@ -44,7 +44,7 @@ const patchedConfig = fixupConfigRules([
 const config = [
   ...patchedConfig,
   // Add more flat configs here
-  { ignores: [".next/*"] },
+  { ignores: [".next/*", "next-env.d.ts"] },
 ];
 
 export default config;

@@ -26,8 +26,11 @@ const initialStats: Stats = {
   reactionMsSum: 0,
 };
 
+const RESOLVED_DISPLAY_MS = 900;
+
 export default function DeadlockParryTrainer() {
   const [phase, setPhase] = useState<Phase>("idle");
+  const [sessionActive, setSessionActive] = useState(false);
   const [settings, setSettings] = useState<ParrySettings>(DEFAULT_SETTINGS);
   const [minDelayMs, setMinDelayMs] = useState(800);
   const [maxDelayMs, setMaxDelayMs] = useState(2800);
@@ -38,11 +41,28 @@ export default function DeadlockParryTrainer() {
   const windupHandleRef = useRef<CueHandle | null>(null);
   const waitingTimeoutRef = useRef<number | null>(null);
   const connectTimeoutRef = useRef<number | null>(null);
+  const nextRoundTimeoutRef = useRef<number | null>(null);
   const phaseRef = useRef<Phase>("idle");
+  const sessionActiveRef = useRef(false);
+  const minDelayRef = useRef(minDelayMs);
+  const maxDelayRef = useRef(maxDelayMs);
+  const settingsRef = useRef(settings);
 
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+  useEffect(() => {
+    sessionActiveRef.current = sessionActive;
+  }, [sessionActive]);
+  useEffect(() => {
+    minDelayRef.current = minDelayMs;
+  }, [minDelayMs]);
+  useEffect(() => {
+    maxDelayRef.current = maxDelayMs;
+  }, [maxDelayMs]);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   const clearTimers = () => {
     if (waitingTimeoutRef.current !== null) {
@@ -52,6 +72,10 @@ export default function DeadlockParryTrainer() {
     if (connectTimeoutRef.current !== null) {
       window.clearTimeout(connectTimeoutRef.current);
       connectTimeoutRef.current = null;
+    }
+    if (nextRoundTimeoutRef.current !== null) {
+      window.clearTimeout(nextRoundTimeoutRef.current);
+      nextRoundTimeoutRef.current = null;
     }
   };
 
@@ -77,35 +101,80 @@ export default function DeadlockParryTrainer() {
     });
   }, []);
 
-  const startRound = useCallback(() => {
+  // Schedule one round. Reads session parameters from refs so the scheduler
+  // doesn't need to be re-created when sliders move. The self-reference via
+  // `scheduleRoundRef` avoids a TDZ cycle inside the useCallback.
+  const scheduleRoundRef = useRef<() => void>(() => {});
+  const scheduleRound = useCallback(() => {
+    if (!sessionActiveRef.current) return;
     clearTimers();
     stopWindupCue();
     setLastOutcome(null);
     setPhase("waiting");
 
-    const delay = randomDelayMs(minDelayMs, maxDelayMs);
+    const delay = randomDelayMs(minDelayRef.current, maxDelayRef.current);
     waitingTimeoutRef.current = window.setTimeout(() => {
+      if (!sessionActiveRef.current) return;
+      const snap = settingsRef.current;
       windupStartRef.current = performance.now();
       setPhase("windup");
-      windupHandleRef.current = cuePack.playWindup(settings.windupDurationMs);
+      windupHandleRef.current = cuePack.playWindup(snap.windupDurationMs);
 
       connectTimeoutRef.current = window.setTimeout(() => {
-        if (phaseRef.current === "windup") {
-          stopWindupCue();
-          cuePack.playConnect();
-          setPhase("resolved");
-          recordOutcome(makeOutcome({ pressed: false }, 0, settings));
+        if (phaseRef.current !== "windup") return;
+        stopWindupCue();
+        cuePack.playConnect();
+        setPhase("resolved");
+        recordOutcome(makeOutcome({ pressed: false }, 0, snap));
+        if (sessionActiveRef.current) {
+          nextRoundTimeoutRef.current = window.setTimeout(
+            () => scheduleRoundRef.current(),
+            RESOLVED_DISPLAY_MS,
+          );
         }
-      }, settings.windupDurationMs);
+      }, snap.windupDurationMs);
     }, delay);
-  }, [maxDelayMs, minDelayMs, recordOutcome, settings]);
+  }, [recordOutcome]);
+  useEffect(() => {
+    scheduleRoundRef.current = scheduleRound;
+  }, [scheduleRound]);
+
+  const startSession = useCallback(() => {
+    if (sessionActiveRef.current) return;
+    setSessionActive(true);
+    sessionActiveRef.current = true;
+    scheduleRound();
+  }, [scheduleRound]);
+
+  const stopSession = useCallback(() => {
+    setSessionActive(false);
+    sessionActiveRef.current = false;
+    clearTimers();
+    stopWindupCue();
+    setPhase("idle");
+  }, []);
+
+  const toggleSession = useCallback(() => {
+    if (sessionActiveRef.current) stopSession();
+    else startSession();
+  }, [startSession, stopSession]);
 
   const handleParryPress = useCallback(() => {
     const current = phaseRef.current;
+    const scheduleNext = () => {
+      if (sessionActiveRef.current) {
+        nextRoundTimeoutRef.current = window.setTimeout(
+          scheduleRound,
+          RESOLVED_DISPLAY_MS,
+        );
+      }
+    };
+
     if (current === "waiting") {
       clearTimers();
       setPhase("resolved");
       recordOutcome({ kind: "too-early", reactionMs: 0 });
+      scheduleNext();
       return;
     }
     if (current !== "windup" || windupStartRef.current === null) return;
@@ -116,16 +185,35 @@ export default function DeadlockParryTrainer() {
     const outcome = makeOutcome(
       { pressed: true, pressTimeMs: pressTime },
       windupStartRef.current,
-      settings,
+      settingsRef.current,
     );
     setPhase("resolved");
     if (outcome.kind === "parried") cuePack.playParrySuccess();
     recordOutcome(outcome);
-  }, [recordOutcome, settings]);
+    scheduleNext();
+  }, [recordOutcome, scheduleRound]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
+
+      if (e.key === " " || e.code === "Space") {
+        // Ignore when typing in form controls so spacebar retains normal
+        // behavior inside inputs.
+        const target = e.target as HTMLElement | null;
+        if (
+          target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable)
+        ) {
+          return;
+        }
+        e.preventDefault();
+        toggleSession();
+        return;
+      }
+
       if (e.key === "f" || e.key === "F") {
         const current = phaseRef.current;
         if (current === "waiting" || current === "windup") {
@@ -136,7 +224,7 @@ export default function DeadlockParryTrainer() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [handleParryPress]);
+  }, [handleParryPress, toggleSession]);
 
   useEffect(() => {
     return () => {
@@ -170,8 +258,10 @@ export default function DeadlockParryTrainer() {
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Deadlock Parry Trainer</h1>
       <p className="text-sm text-gray-600 mb-4">
-        Press <kbd className="px-1 py-0.5 bg-gray-200 rounded">F</kbd> as soon
-        as you detect the heavy melee wind-up. Cue pack:{" "}
+        Press <kbd className="px-1 py-0.5 bg-gray-200 rounded">Space</kbd> to
+        start or stop a session. Press{" "}
+        <kbd className="px-1 py-0.5 bg-gray-200 rounded">F</kbd> the moment you
+        hear the heavy-melee wind-up. Cue pack:{" "}
         <span className="font-medium">{cuePack.name}</span>
         {cuePack.description ? ` — ${cuePack.description}` : null}
       </p>
@@ -256,7 +346,7 @@ export default function DeadlockParryTrainer() {
         }`}
         aria-live="polite"
       >
-        {phase === "idle" && "Press Start to begin"}
+        {phase === "idle" && "Press Start (or Space) to begin"}
         {(phase === "waiting" || phase === "windup") && "Stay alert…"}
         {phase === "windup" && (
           <WindupVisual durationMs={settings.windupDurationMs} />
@@ -266,10 +356,14 @@ export default function DeadlockParryTrainer() {
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
-          onClick={startRound}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          onClick={toggleSession}
+          className={`px-4 py-2 rounded text-white ${
+            sessionActive
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-indigo-600 hover:bg-indigo-700"
+          }`}
         >
-          {phase === "idle" || phase === "resolved" ? "Start round" : "Restart"}
+          {sessionActive ? "Stop (Space)" : "Start (Space)"}
         </button>
         <button
           onClick={handleParryPress}

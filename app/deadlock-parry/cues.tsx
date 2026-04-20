@@ -305,8 +305,35 @@ export function createAssetCuePack(opts: AssetCuePackOptions): CuePack {
 
   const isAvailable = (src: string): boolean => availability.get(src) === true;
 
+  // Preload each audio asset into a template HTMLAudioElement at module load.
+  // Browsers won't actually fetch until something forces them to — we nudge
+  // that along with `.load()`. For playback we clone the template so
+  // overlapping plays don't stomp each other's currentTime.
+  const templates = new Map<string, HTMLAudioElement>();
+  const preload = (src: string): void => {
+    if (typeof window === "undefined") return;
+    if (templates.has(src)) return;
+    const a = new Audio();
+    a.preload = "auto";
+    a.src = src;
+    try {
+      a.load();
+    } catch {
+      /* ignore */
+    }
+    templates.set(src, a);
+  };
+  preload(opts.windupAudioSrc);
+  preload(opts.connectAudioSrc);
+  preload(opts.parryAudioSrc);
+
   const play = (src: string): HTMLAudioElement => {
-    const audio = new Audio(src);
+    const template = templates.get(src);
+    // Clone via the already-fetched source so we inherit the buffered data
+    // rather than starting a fresh network request.
+    const audio = template
+      ? (template.cloneNode(true) as HTMLAudioElement)
+      : new Audio(src);
     audio.play().catch(() => {
       /* autoplay may be blocked until first interaction; the Start button covers that. */
     });

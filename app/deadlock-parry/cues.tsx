@@ -284,9 +284,31 @@ export type AssetCuePackOptions = {
   windupVisualSrc?: string;
   /** Take over the visual completely; ignores windupVisualSrc if provided. */
   WindupVisual?: React.ComponentType<WindupVisualProps>;
+  /**
+   * CuePack used when any asset is missing (e.g. gitignored local-only files
+   * not present in production). Defaults to `synthesizedCuePack`.
+   */
+  fallback?: CuePack;
 };
 
 export function createAssetCuePack(opts: AssetCuePackOptions): CuePack {
+  const fallback = opts.fallback ?? synthesizedCuePack;
+  const availability = new Map<string, boolean>();
+
+  const probe = (src: string): void => {
+    if (typeof window === "undefined") return;
+    if (availability.has(src)) return;
+    fetch(src, { method: "HEAD" })
+      .then((res) => availability.set(src, res.ok))
+      .catch(() => availability.set(src, false));
+  };
+  probe(opts.windupAudioSrc);
+  probe(opts.connectAudioSrc);
+  probe(opts.parryAudioSrc);
+  if (opts.windupVisualSrc) probe(opts.windupVisualSrc);
+
+  const isAvailable = (src: string): boolean => availability.get(src) === true;
+
   const play = (src: string): HTMLAudioElement => {
     const audio = new Audio(src);
     audio.play().catch(() => {
@@ -295,13 +317,33 @@ export function createAssetCuePack(opts: AssetCuePackOptions): CuePack {
     return audio;
   };
 
-  const Visual: React.ComponentType<WindupVisualProps> =
-    opts.WindupVisual ?? makeVisualFromSrc(opts.windupVisualSrc);
+  // Compute these once — makeVisualFromSrc creates a React component, and
+  // doing so inside render trips react-hooks/static-components.
+  const srcVisual = opts.windupVisualSrc
+    ? makeVisualFromSrc(opts.windupVisualSrc)
+    : null;
+
+  // createAssetCuePack is called exactly once at module load (to initialize
+  // the exported `cuePack`), so this component is defined once — not on every
+  // render.
+  const Visual: React.ComponentType<WindupVisualProps> = (props) => {
+    // Re-evaluate availability at render time (probe may have resolved).
+    const V =
+      opts.WindupVisual ??
+      (srcVisual && opts.windupVisualSrc && isAvailable(opts.windupVisualSrc)
+        ? srcVisual
+        : fallback.WindupVisual);
+    return <V {...props} />;
+  };
+  Visual.displayName = "AssetWindupVisual";
 
   return {
     name: opts.name,
     description: opts.description,
-    playWindup() {
+    playWindup(durationMs) {
+      if (!isAvailable(opts.windupAudioSrc)) {
+        return fallback.playWindup(durationMs);
+      }
       const audio = play(opts.windupAudioSrc);
       return {
         stop: () => {
@@ -310,8 +352,20 @@ export function createAssetCuePack(opts: AssetCuePackOptions): CuePack {
         },
       };
     },
-    playConnect: () => void play(opts.connectAudioSrc),
-    playParrySuccess: () => void play(opts.parryAudioSrc),
+    playConnect: () => {
+      if (!isAvailable(opts.connectAudioSrc)) {
+        fallback.playConnect();
+        return;
+      }
+      void play(opts.connectAudioSrc);
+    },
+    playParrySuccess: () => {
+      if (!isAvailable(opts.parryAudioSrc)) {
+        fallback.playParrySuccess();
+        return;
+      }
+      void play(opts.parryAudioSrc);
+    },
     WindupVisual: Visual,
   };
 }
@@ -352,7 +406,17 @@ function makeVisualFromSrc(
 /*  Active cue pack — swap this export to change what the trainer uses.       */
 /* -------------------------------------------------------------------------- */
 
-// To substitute real in-game assets, replace the line below with e.g.:
-//   export const cuePack = createAssetCuePack({ ... });
-// or import and re-export your own implementation of the CuePack interface.
-export const cuePack: CuePack = synthesizedCuePack;
+// Active pack uses real Deadlock audio/visuals when they're available under
+// /public/deadlock-parry/ (see .gitignore — these are local-only assets). In
+// production / any environment where the files are missing, each cue
+// gracefully falls back to `synthesizedCuePack` via the HEAD probe in
+// `createAssetCuePack`.
+export const cuePack: CuePack = createAssetCuePack({
+  name: "Deadlock (local assets)",
+  description:
+    "Real in-game audio + character art. Files must be present under /public/deadlock-parry/; otherwise falls back to synthesized cues.",
+  windupAudioSrc: "/deadlock-parry/alert.mp3",
+  connectAudioSrc: "/deadlock-parry/fail.mp3",
+  parryAudioSrc: "/deadlock-parry/parry.mp3",
+  windupVisualSrc: "/deadlock-parry/lash.png",
+});

@@ -40,3 +40,8 @@ jspm_packages
 .next
 .vercel
 .env*.local
+
+# Deadlock parry trainer: locally-extracted game assets
+# These are copyrighted Valve audio/visuals — do not commit.
+# See app/deadlock-parry/cues.tsx for how to wire them in locally.
+/public/deadlock-parry/

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cuePack, type CueHandle } from "./cues";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
 import {
   DEFAULT_SETTINGS,
   ParrySettings,
@@ -36,6 +37,11 @@ export default function DeadlockParryTrainer() {
   const [maxDelayMs, setMaxDelayMs] = useState(2800);
   const [stats, setStats] = useState<Stats>(initialStats);
   const [lastOutcome, setLastOutcome] = useState<RoundOutcome | null>(null);
+  const [bestReactionMs, setBestReactionMs] = useLocalStorage<number | null>(
+    "deadlock-parry:best-reaction-ms",
+    null,
+  );
+  const [isNewBest, setIsNewBest] = useState(false);
 
   const windupStartRef = useRef<number | null>(null);
   const windupHandleRef = useRef<CueHandle | null>(null);
@@ -84,22 +90,36 @@ export default function DeadlockParryTrainer() {
     windupHandleRef.current = null;
   };
 
-  const recordOutcome = useCallback((outcome: RoundOutcome) => {
-    setLastOutcome(outcome);
-    setStats((prev) => {
+  const recordOutcome = useCallback(
+    (outcome: RoundOutcome) => {
+      setLastOutcome(outcome);
+      setStats((prev) => {
+        if (outcome.kind === "parried") {
+          return {
+            ...prev,
+            parries: prev.parries + 1,
+            reactionMsSum: prev.reactionMsSum + outcome.reactionMs,
+          };
+        }
+        if (outcome.kind === "too-early") {
+          return { ...prev, tooEarly: prev.tooEarly + 1 };
+        }
+        return { ...prev, hits: prev.hits + 1 };
+      });
       if (outcome.kind === "parried") {
-        return {
-          ...prev,
-          parries: prev.parries + 1,
-          reactionMsSum: prev.reactionMsSum + outcome.reactionMs,
-        };
+        const rounded = Math.round(outcome.reactionMs);
+        if (bestReactionMs === null || rounded < bestReactionMs) {
+          setBestReactionMs(rounded);
+          setIsNewBest(true);
+        } else {
+          setIsNewBest(false);
+        }
+      } else {
+        setIsNewBest(false);
       }
-      if (outcome.kind === "too-early") {
-        return { ...prev, tooEarly: prev.tooEarly + 1 };
-      }
-      return { ...prev, hits: prev.hits + 1 };
-    });
-  }, []);
+    },
+    [bestReactionMs, setBestReactionMs],
+  );
 
   // Schedule one round. Reads session parameters from refs so the scheduler
   // doesn't need to be re-created when sliders move. The self-reference via
@@ -110,6 +130,7 @@ export default function DeadlockParryTrainer() {
     clearTimers();
     stopWindupCue();
     setLastOutcome(null);
+    setIsNewBest(false);
     setPhase("waiting");
 
     const delay = randomDelayMs(minDelayRef.current, maxDelayRef.current);
@@ -236,6 +257,12 @@ export default function DeadlockParryTrainer() {
   const resetStats = () => {
     setStats(initialStats);
     setLastOutcome(null);
+    setIsNewBest(false);
+  };
+
+  const resetBestTime = () => {
+    setBestReactionMs(null);
+    setIsNewBest(false);
   };
 
   const totalRounds = stats.parries + stats.hits + stats.tooEarly;
@@ -246,8 +273,12 @@ export default function DeadlockParryTrainer() {
 
   const outcomeLabel = (() => {
     if (!lastOutcome) return "";
-    if (lastOutcome.kind === "parried")
-      return `✅ Parried in ${Math.round(lastOutcome.reactionMs)}ms`;
+    if (lastOutcome.kind === "parried") {
+      const ms = Math.round(lastOutcome.reactionMs);
+      return isNewBest
+        ? `🏆 New best! Parried in ${ms}ms`
+        : `✅ Parried in ${ms}ms`;
+    }
     if (lastOutcome.kind === "too-early") return `⚠️ Too early`;
     return "💥 Got hit";
   })();
@@ -378,6 +409,13 @@ export default function DeadlockParryTrainer() {
         >
           Reset stats
         </button>
+        <button
+          onClick={resetBestTime}
+          disabled={bestReactionMs === null}
+          className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50"
+        >
+          Reset best
+        </button>
       </div>
 
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
@@ -386,6 +424,10 @@ export default function DeadlockParryTrainer() {
         <Stat label="Too early" value={stats.tooEarly} />
         <Stat label="Accuracy" value={`${accuracy}%`} />
         <Stat label="Avg reaction" value={`${avgReaction}ms`} />
+        <Stat
+          label="Best reaction"
+          value={bestReactionMs === null ? "—" : `${bestReactionMs}ms`}
+        />
         <Stat label="Rounds" value={totalRounds} />
       </div>
     </div>

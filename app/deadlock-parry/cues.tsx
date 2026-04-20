@@ -77,6 +77,7 @@ export const synthesizedCuePack: CuePack = {
     const now = ctx.currentTime;
     const duration = durationMs / 1000;
 
+    // Layer 1: rising filtered noise "whoosh" (air movement of a heavy swing).
     const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -84,27 +85,70 @@ export const synthesizedCuePack: CuePack = {
 
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(300, now);
-    filter.frequency.exponentialRampToValueAtTime(1800, now + duration);
-    filter.Q.value = 6;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = "bandpass";
+    noiseFilter.frequency.setValueAtTime(350, now);
+    noiseFilter.frequency.exponentialRampToValueAtTime(2600, now + duration);
+    noiseFilter.Q.value = 4;
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.35, now + duration * 0.8);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.32, now + duration * 0.85);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    // Layer 2: rising sawtooth "charge" tone, slightly detuned for thickness.
+    const charge1 = ctx.createOscillator();
+    charge1.type = "sawtooth";
+    charge1.frequency.setValueAtTime(90, now);
+    charge1.frequency.exponentialRampToValueAtTime(260, now + duration);
+
+    const charge2 = ctx.createOscillator();
+    charge2.type = "sawtooth";
+    charge2.detune.value = 12;
+    charge2.frequency.setValueAtTime(90, now);
+    charge2.frequency.exponentialRampToValueAtTime(260, now + duration);
+
+    const chargeFilter = ctx.createBiquadFilter();
+    chargeFilter.type = "lowpass";
+    chargeFilter.frequency.setValueAtTime(600, now);
+    chargeFilter.frequency.exponentialRampToValueAtTime(1600, now + duration);
+    chargeFilter.Q.value = 8;
+
+    const chargeGain = ctx.createGain();
+    chargeGain.gain.setValueAtTime(0.0001, now);
+    chargeGain.gain.exponentialRampToValueAtTime(0.18, now + duration * 0.9);
+    chargeGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    charge1.connect(chargeFilter);
+    charge2.connect(chargeFilter);
+    chargeFilter.connect(chargeGain);
+    chargeGain.connect(ctx.destination);
+
     noise.start(now);
     noise.stop(now + duration);
+    charge1.start(now);
+    charge1.stop(now + duration);
+    charge2.start(now);
+    charge2.stop(now + duration);
 
     return {
       stop: () => {
         try {
           noise.stop();
+        } catch {
+          /* already stopped */
+        }
+        try {
+          charge1.stop();
+        } catch {
+          /* already stopped */
+        }
+        try {
+          charge2.stop();
         } catch {
           /* already stopped */
         }
@@ -115,33 +159,95 @@ export const synthesizedCuePack: CuePack = {
   playConnect() {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.25);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.6, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.3);
+
+    // Sub thump: low sine with a quick pitch drop for that "weight" feeling.
+    const sub = ctx.createOscillator();
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(160, now);
+    sub.frequency.exponentialRampToValueAtTime(45, now + 0.18);
+    const subGain = ctx.createGain();
+    subGain.gain.setValueAtTime(0.0001, now);
+    subGain.gain.exponentialRampToValueAtTime(0.8, now + 0.008);
+    subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+    sub.connect(subGain);
+    subGain.connect(ctx.destination);
+
+    // Crunchy body: short burst of low-passed noise for the impact texture.
+    const bufSize = Math.floor(ctx.sampleRate * 0.25);
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * 0.8;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.setValueAtTime(1400, now);
+    noiseFilter.frequency.exponentialRampToValueAtTime(200, now + 0.2);
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.45, now + 0.005);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    sub.start(now);
+    sub.stop(now + 0.35);
+    noise.start(now);
+    noise.stop(now + 0.25);
   },
 
   playParrySuccess() {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(1200, now);
-    osc.frequency.exponentialRampToValueAtTime(2200, now + 0.08);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.25);
+
+    // Bright noise transient — the "tink" attack of metal-on-metal.
+    const bufSize = Math.floor(ctx.sampleRate * 0.08);
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) d[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = "highpass";
+    noiseFilter.frequency.value = 4500;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.5, now + 0.002);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    // Inharmonic partials — a cluster of high sine tones gives the metallic
+    // "clang" ringing that a simple oscillator sweep can't fake.
+    const partials = [2100, 3180, 4700, 6250, 7800];
+    const clangGain = ctx.createGain();
+    clangGain.gain.setValueAtTime(0.0001, now);
+    clangGain.gain.exponentialRampToValueAtTime(0.35, now + 0.005);
+    clangGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+    clangGain.connect(ctx.destination);
+
+    const oscs: OscillatorNode[] = [];
+    partials.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now);
+      // Slight downward shimmer.
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.97, now + 0.55);
+      const pGain = ctx.createGain();
+      const amp = 0.9 / (i + 1);
+      pGain.gain.setValueAtTime(amp, now);
+      pGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55 - i * 0.05);
+      osc.connect(pGain);
+      pGain.connect(clangGain);
+      osc.start(now);
+      osc.stop(now + 0.6);
+      oscs.push(osc);
+    });
+
+    noise.start(now);
+    noise.stop(now + 0.08);
   },
 
   WindupVisual: SynthesizedWindupVisual,

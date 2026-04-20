@@ -121,9 +121,11 @@ export default function Sequencer() {
 
   function getCtx(): AudioContext {
     if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext ||
+      audioCtxRef.current = new (
+        window.AudioContext ||
         // @ts-ignore
-        window.webkitAudioContext)();
+        window.webkitAudioContext
+      )();
     }
     return audioCtxRef.current;
   }

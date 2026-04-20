@@ -59,101 +59,99 @@ export default async function Image() {
   const gap = 2; // Smaller gap
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        fontSize: 32,
+        background: "linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)",
+        color: "#fff",
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "40px",
+        gap: "30px",
+      }}
+    >
+      {/* Synth Grid - Top */}
       <div
         style={{
-          fontSize: 32,
-          background: "linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)",
-          color: "#fff",
-          width: "100%",
-          height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "40px",
-          gap: "30px",
+          gap,
+          padding: "20px",
+          borderRadius: "12px",
+          background: "rgba(59, 130, 246, 0.1)",
+          border: "1px solid rgba(59, 130, 246, 0.3)",
         }}
       >
-        {/* Synth Grid - Top */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap,
-            padding: "20px",
-            borderRadius: "12px",
-            background: "rgba(59, 130, 246, 0.1)",
-            border: "1px solid rgba(59, 130, 246, 0.3)",
-          }}
-        >
-          {beat.synth.map((row: boolean[], rowIndex: number) => (
-            <div
-              key={rowIndex}
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                gap,
-              }}
-            >
-              {row.map((active: boolean, step: number) => (
-                <div
-                  key={step}
-                  style={{
-                    width: square,
-                    height: square,
-                    borderRadius: 3,
-                    background: active ? "#3b82f6" : "rgba(255,255,255,0.1)",
-                    border: active
-                      ? "1px solid #2563eb"
-                      : "1px solid rgba(255,255,255,0.05)",
-                  }}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* Drum Grid - Bottom */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap,
-            padding: "20px",
-            borderRadius: "12px",
-            background: "rgba(34, 197, 94, 0.1)",
-            border: "1px solid rgba(34, 197, 94, 0.3)",
-          }}
-        >
-          {beat.drums.map((row: boolean[], rowIndex: number) => (
-            <div
-              key={rowIndex}
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                gap,
-              }}
-            >
-              {row.map((active: boolean, step: number) => (
-                <div
-                  key={step}
-                  style={{
-                    width: square,
-                    height: square,
-                    borderRadius: 3,
-                    background: active ? "#22c55e" : "rgba(255,255,255,0.1)",
-                    border: active
-                      ? "1px solid #16a34a"
-                      : "1px solid rgba(255,255,255,0.05)",
-                  }}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+        {beat.synth.map((row: boolean[], rowIndex: number) => (
+          <div
+            key={rowIndex}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap,
+            }}
+          >
+            {row.map((active: boolean, step: number) => (
+              <div
+                key={step}
+                style={{
+                  width: square,
+                  height: square,
+                  borderRadius: 3,
+                  background: active ? "#3b82f6" : "rgba(255,255,255,0.1)",
+                  border: active
+                    ? "1px solid #2563eb"
+                    : "1px solid rgba(255,255,255,0.05)",
+                }}
+              />
+            ))}
+          </div>
+        ))}
       </div>
-    ),
+
+      {/* Drum Grid - Bottom */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap,
+          padding: "20px",
+          borderRadius: "12px",
+          background: "rgba(34, 197, 94, 0.1)",
+          border: "1px solid rgba(34, 197, 94, 0.3)",
+        }}
+      >
+        {beat.drums.map((row: boolean[], rowIndex: number) => (
+          <div
+            key={rowIndex}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap,
+            }}
+          >
+            {row.map((active: boolean, step: number) => (
+              <div
+                key={step}
+                style={{
+                  width: square,
+                  height: square,
+                  borderRadius: 3,
+                  background: active ? "#22c55e" : "rgba(255,255,255,0.1)",
+                  border: active
+                    ? "1px solid #16a34a"
+                    : "1px solid rgba(255,255,255,0.05)",
+                }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>,
     {
       ...size,
     },

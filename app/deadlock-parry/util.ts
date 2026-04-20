@@ -34,8 +34,6 @@ export function randomDelayMs(minMs: number, maxMs: number): number {
   return minMs + Math.random() * (maxMs - minMs);
 }
 
-export type CueMode = "audio" | "visual" | "both";
-
 export type RoundOutcome =
   | { kind: "parried"; reactionMs: number }
   | { kind: "hit" }

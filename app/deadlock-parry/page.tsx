@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cuePack, type CueHandle } from "./cues";
 import {
-  CueMode,
   DEFAULT_SETTINGS,
   ParrySettings,
   RoundOutcome,
@@ -26,81 +26,16 @@ const initialStats: Stats = {
   reactionMsSum: 0,
 };
 
-function playWindupSound(ctx: AudioContext, durationMs: number) {
-  const now = ctx.currentTime;
-  const duration = durationMs / 1000;
-
-  // Noise through a rising low-pass to simulate a heavy wind-up swoosh.
-  const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = Math.random() * 2 - 1;
-  }
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(300, now);
-  filter.frequency.exponentialRampToValueAtTime(1800, now + duration);
-  filter.Q.value = 6;
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.35, now + duration * 0.8);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-  noise.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-  noise.start(now);
-  noise.stop(now + duration);
-}
-
-function playConnectSound(ctx: AudioContext) {
-  const now = ctx.currentTime;
-  // Low sine thud.
-  const osc = ctx.createOscillator();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(140, now);
-  osc.frequency.exponentialRampToValueAtTime(50, now + 0.25);
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.6, now);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.3);
-}
-
-function playParrySound(ctx: AudioContext) {
-  const now = ctx.currentTime;
-  // Bright metallic ding.
-  const osc = ctx.createOscillator();
-  osc.type = "triangle";
-  osc.frequency.setValueAtTime(1200, now);
-  osc.frequency.exponentialRampToValueAtTime(2200, now + 0.08);
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.4, now);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.25);
-}
-
 export default function DeadlockParryTrainer() {
   const [phase, setPhase] = useState<Phase>("idle");
-  const [cueMode, setCueMode] = useState<CueMode>("both");
   const [settings, setSettings] = useState<ParrySettings>(DEFAULT_SETTINGS);
   const [minDelayMs, setMinDelayMs] = useState(800);
   const [maxDelayMs, setMaxDelayMs] = useState(2800);
   const [stats, setStats] = useState<Stats>(initialStats);
   const [lastOutcome, setLastOutcome] = useState<RoundOutcome | null>(null);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const windupStartRef = useRef<number | null>(null);
+  const windupHandleRef = useRef<CueHandle | null>(null);
   const waitingTimeoutRef = useRef<number | null>(null);
   const connectTimeoutRef = useRef<number | null>(null);
   const phaseRef = useRef<Phase>("idle");
@@ -108,20 +43,6 @@ export default function DeadlockParryTrainer() {
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
-
-  const ensureAudio = useCallback(() => {
-    if (!audioCtxRef.current) {
-      const AC =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      audioCtxRef.current = new AC();
-    }
-    if (audioCtxRef.current.state === "suspended") {
-      void audioCtxRef.current.resume();
-    }
-    return audioCtxRef.current;
-  }, []);
 
   const clearTimers = () => {
     if (waitingTimeoutRef.current !== null) {
@@ -132,6 +53,11 @@ export default function DeadlockParryTrainer() {
       window.clearTimeout(connectTimeoutRef.current);
       connectTimeoutRef.current = null;
     }
+  };
+
+  const stopWindupCue = () => {
+    windupHandleRef.current?.stop();
+    windupHandleRef.current = null;
   };
 
   const recordOutcome = useCallback((outcome: RoundOutcome) => {
@@ -152,8 +78,8 @@ export default function DeadlockParryTrainer() {
   }, []);
 
   const startRound = useCallback(() => {
-    const ctx = ensureAudio();
     clearTimers();
+    stopWindupCue();
     setLastOutcome(null);
     setPhase("waiting");
 
@@ -161,20 +87,18 @@ export default function DeadlockParryTrainer() {
     waitingTimeoutRef.current = window.setTimeout(() => {
       windupStartRef.current = performance.now();
       setPhase("windup");
-
-      if (cueMode !== "visual") {
-        playWindupSound(ctx, settings.windupDurationMs);
-      }
+      windupHandleRef.current = cuePack.playWindup(settings.windupDurationMs);
 
       connectTimeoutRef.current = window.setTimeout(() => {
         if (phaseRef.current === "windup") {
-          if (cueMode !== "visual") playConnectSound(ctx);
+          stopWindupCue();
+          cuePack.playConnect();
           setPhase("resolved");
           recordOutcome(makeOutcome({ pressed: false }, 0, settings));
         }
       }, settings.windupDurationMs);
     }, delay);
-  }, [cueMode, ensureAudio, maxDelayMs, minDelayMs, recordOutcome, settings]);
+  }, [maxDelayMs, minDelayMs, recordOutcome, settings]);
 
   const handleParryPress = useCallback(() => {
     const current = phaseRef.current;
@@ -187,6 +111,7 @@ export default function DeadlockParryTrainer() {
     if (current !== "windup" || windupStartRef.current === null) return;
 
     clearTimers();
+    stopWindupCue();
     const pressTime = performance.now();
     const outcome = makeOutcome(
       { pressed: true, pressTimeMs: pressTime },
@@ -194,12 +119,9 @@ export default function DeadlockParryTrainer() {
       settings,
     );
     setPhase("resolved");
-    if (outcome.kind === "parried") {
-      const ctx = ensureAudio();
-      if (cueMode !== "visual") playParrySound(ctx);
-    }
+    if (outcome.kind === "parried") cuePack.playParrySuccess();
     recordOutcome(outcome);
-  }, [cueMode, ensureAudio, recordOutcome, settings]);
+  }, [recordOutcome, settings]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -219,7 +141,7 @@ export default function DeadlockParryTrainer() {
   useEffect(() => {
     return () => {
       clearTimers();
-      audioCtxRef.current?.close().catch(() => {});
+      stopWindupCue();
     };
   }, []);
 
@@ -234,8 +156,6 @@ export default function DeadlockParryTrainer() {
   const avgReaction =
     stats.parries === 0 ? 0 : Math.round(stats.reactionMsSum / stats.parries);
 
-  const showVisual = cueMode !== "audio" && phase === "windup";
-
   const outcomeLabel = (() => {
     if (!lastOutcome) return "";
     if (lastOutcome.kind === "parried")
@@ -244,28 +164,19 @@ export default function DeadlockParryTrainer() {
     return "💥 Got hit";
   })();
 
+  const WindupVisual = cuePack.WindupVisual;
+
   return (
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Deadlock Parry Trainer</h1>
       <p className="text-sm text-gray-600 mb-4">
         Press <kbd className="px-1 py-0.5 bg-gray-200 rounded">F</kbd> as soon
-        as you detect the heavy melee wind-up. Synthesized audio cues — no
-        in-game assets are used.
+        as you detect the heavy melee wind-up. Cue pack:{" "}
+        <span className="font-medium">{cuePack.name}</span>
+        {cuePack.description ? ` — ${cuePack.description}` : null}
       </p>
 
       <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-        <label className="flex flex-col">
-          <span className="font-medium">Cues</span>
-          <select
-            className="border rounded p-1"
-            value={cueMode}
-            onChange={(e) => setCueMode(e.target.value as CueMode)}
-          >
-            <option value="both">Audio + Visual</option>
-            <option value="audio">Audio only</option>
-            <option value="visual">Visual only</option>
-          </select>
-        </label>
         <label className="flex flex-col">
           <span className="font-medium">
             Wind-up duration: {settings.windupDurationMs}ms
@@ -306,7 +217,7 @@ export default function DeadlockParryTrainer() {
             }
           />
         </label>
-        <label className="flex flex-col">
+        <label className="flex flex-col sm:col-span-2">
           <span className="font-medium">
             Delay range: {minDelayMs}–{maxDelayMs}ms
           </span>
@@ -332,11 +243,11 @@ export default function DeadlockParryTrainer() {
       </div>
 
       <div
-        className={`relative h-48 rounded-lg border-2 flex items-center justify-center text-xl font-semibold transition-colors duration-100 ${
-          showVisual
-            ? "bg-red-500 border-red-700 text-white animate-pulse"
-            : phase === "waiting"
-              ? "bg-yellow-50 border-yellow-300 text-yellow-900"
+        className={`relative h-48 rounded-lg border-2 overflow-hidden flex items-center justify-center text-xl font-semibold transition-colors duration-100 ${
+          phase === "waiting"
+            ? "bg-yellow-50 border-yellow-300 text-yellow-900"
+            : phase === "windup"
+              ? "bg-gray-900 border-gray-700 text-white"
               : phase === "resolved"
                 ? lastOutcome?.kind === "parried"
                   ? "bg-green-100 border-green-400 text-green-900"
@@ -349,7 +260,9 @@ export default function DeadlockParryTrainer() {
       >
         {phase === "idle" && "Press Start to begin"}
         {phase === "waiting" && "Stay alert…"}
-        {phase === "windup" && (showVisual ? "PARRY NOW!" : "🔊 listen…")}
+        {phase === "windup" && (
+          <WindupVisual durationMs={settings.windupDurationMs} />
+        )}
         {phase === "resolved" && outcomeLabel}
       </div>
 

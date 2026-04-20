@@ -406,17 +406,17 @@ function makeVisualFromSrc(
 /*  Active cue pack — swap this export to change what the trainer uses.       */
 /* -------------------------------------------------------------------------- */
 
-// Active pack uses real Deadlock audio/visuals when they're available under
+// Active pack uses real Deadlock audio when available under
 // /public/deadlock-parry/ (see .gitignore — these are local-only assets). In
 // production / any environment where the files are missing, each cue
 // gracefully falls back to `synthesizedCuePack` via the HEAD probe in
-// `createAssetCuePack`.
+// `createAssetCuePack`. The windup visual is always synthesized (no shipped
+// imagery).
 export const cuePack: CuePack = createAssetCuePack({
   name: "Deadlock (local assets)",
   description:
-    "Real in-game audio + character art. Files must be present under /public/deadlock-parry/; otherwise falls back to synthesized cues.",
+    "Real in-game audio. Files must be present under /public/deadlock-parry/; otherwise falls back to synthesized cues.",
   windupAudioSrc: "/deadlock-parry/alert.mp3",
   connectAudioSrc: "/deadlock-parry/fail.mp3",
   parryAudioSrc: "/deadlock-parry/parry.mp3",
-  windupVisualSrc: "/deadlock-parry/lash.png",
 });

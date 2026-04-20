@@ -17,8 +17,6 @@ const config = [
       "@typescript-eslint/ban-ts-comment": "off",
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-require-imports": "off",
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/refs": "off",
     },
   },
   { ignores: [".next/*", "next-env.d.ts"] },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Beat,
@@ -65,25 +65,26 @@ export default function Sequencer() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialBeatRef = useRef<Beat>(decodeBeat(searchParams));
-
-  const [beat, setBeat] = useState<Beat>(initialBeatRef.current);
+  const [beat, setBeat] = useState<Beat>(() => decodeBeat(searchParams));
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showJson, setShowJson] = useState(false);
-  const [jsonText, setJsonText] = useState("");
+  const [jsonDraft, setJsonDraft] = useState<string | null>(null);
   const [playingNotes, setPlayingNotes] = useState<Set<string>>(new Set());
   const [urlCopied, setUrlCopied] = useState(false);
 
   // Initialize scale settings from the loaded beat
   const [selectedScale, setSelectedScale] = useState<ScaleName>(
-    initialBeatRef.current.scale || "chromatic",
+    () => decodeBeat(searchParams).scale || "chromatic",
   );
   const [rootNote, setRootNote] = useState(
-    initialBeatRef.current.rootNote || "C",
+    () => decodeBeat(searchParams).rootNote || "C",
   );
 
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const jsonText = useMemo(() => JSON.stringify(beat, null, 2), [beat]);
+  const displayedJson = jsonDraft ?? jsonText;
 
   // Get the notes that should be visible based on selected scale
   const visibleNoteIndices = getScaleNotes(rootNote, selectedScale) || [];
@@ -109,7 +110,6 @@ export default function Sequencer() {
   };
 
   useEffect(() => {
-    setJsonText(JSON.stringify(beat, null, 2));
     const encoded = encodeBeat(beat);
     const current = searchParams.toString();
     if (encoded !== current) {
@@ -277,7 +277,7 @@ export default function Sequencer() {
 
   const applyJson = () => {
     try {
-      const parsed = JSON.parse(jsonText);
+      const parsed = JSON.parse(displayedJson);
 
       // Ensure the parsed object matches the Beat interface
       const newBeat: Beat = {
@@ -289,6 +289,7 @@ export default function Sequencer() {
       };
 
       setBeat(newBeat);
+      setJsonDraft(null);
 
       // Update UI state to match the loaded beat
       if (newBeat.rootNote) {
@@ -521,8 +522,8 @@ export default function Sequencer() {
         <div className="space-y-2">
           <textarea
             className="w-full h-40 border p-2 font-mono text-sm"
-            value={jsonText}
-            onChange={(e) => setJsonText(e.target.value)}
+            value={displayedJson}
+            onChange={(e) => setJsonDraft(e.target.value)}
           />
           <button
             onClick={applyJson}

@@ -56,15 +56,11 @@ function getAudioContext(): AudioContext {
   return sharedCtx;
 }
 
-function SynthesizedWindupVisual({ durationMs }: WindupVisualProps) {
-  return (
-    <div
-      className="absolute inset-0 rounded-lg bg-red-500 animate-pulse flex items-center justify-center text-white text-xl font-bold"
-      style={{ animationDuration: `${Math.max(120, durationMs / 4)}ms` }}
-    >
-      PARRY NOW!
-    </div>
-  );
+function SynthesizedWindupVisual() {
+  // Deliberately empty: this trainer is meant to build audio-cue reaction,
+  // not visual reaction. The parent panel intentionally does not change
+  // during windup.
+  return null;
 }
 
 export const synthesizedCuePack: CuePack = {

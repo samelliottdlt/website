@@ -244,22 +244,20 @@ export default function DeadlockParryTrainer() {
 
       <div
         className={`relative h-48 rounded-lg border-2 overflow-hidden flex items-center justify-center text-xl font-semibold transition-colors duration-100 ${
-          phase === "waiting"
+          phase === "waiting" || phase === "windup"
             ? "bg-yellow-50 border-yellow-300 text-yellow-900"
-            : phase === "windup"
-              ? "bg-gray-900 border-gray-700 text-white"
-              : phase === "resolved"
-                ? lastOutcome?.kind === "parried"
-                  ? "bg-green-100 border-green-400 text-green-900"
-                  : lastOutcome?.kind === "too-early"
-                    ? "bg-orange-100 border-orange-400 text-orange-900"
-                    : "bg-red-100 border-red-400 text-red-900"
-                : "bg-gray-50 border-gray-300 text-gray-700"
+            : phase === "resolved"
+              ? lastOutcome?.kind === "parried"
+                ? "bg-green-100 border-green-400 text-green-900"
+                : lastOutcome?.kind === "too-early"
+                  ? "bg-orange-100 border-orange-400 text-orange-900"
+                  : "bg-red-100 border-red-400 text-red-900"
+              : "bg-gray-50 border-gray-300 text-gray-700"
         }`}
         aria-live="polite"
       >
         {phase === "idle" && "Press Start to begin"}
-        {phase === "waiting" && "Stay alert…"}
+        {(phase === "waiting" || phase === "windup") && "Stay alert…"}
         {phase === "windup" && (
           <WindupVisual durationMs={settings.windupDurationMs} />
         )}

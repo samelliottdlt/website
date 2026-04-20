@@ -1,36 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { Disclosure } from "@headlessui/react";
 import { ChevronUpIcon } from "@heroicons/react/20/solid";
 import smoothieData from "./ingredients.json";
 
 const SmoothieCalculator: React.FC = () => {
   const [inventory, setInventory] = useState<{ [key: string]: boolean }>({});
-  const [possibleSmoothies, setPossibleSmoothies] = useState<
-    [string, (string | string[])[]][]
-  >([]);
 
-  const calculatePossibleSmoothies = useCallback(() => {
+  const possibleSmoothies = useMemo<[string, (string | string[])[]][]>(() => {
     const availableIngredients = Object.keys(inventory).filter(
       (ing) => inventory[ing],
     );
-    const possible = Object.entries(smoothieData.smoothies).filter(
-      ([, ingredients]) => {
-        return ingredients.every((ing) => {
-          if (Array.isArray(ing)) {
-            return ing.some((option) => availableIngredients.includes(option));
-          }
-          return availableIngredients.includes(ing);
-        });
-      },
-    );
-    setPossibleSmoothies(possible);
+    return Object.entries(smoothieData.smoothies).filter(([, ingredients]) => {
+      return ingredients.every((ing) => {
+        if (Array.isArray(ing)) {
+          return ing.some((option) => availableIngredients.includes(option));
+        }
+        return availableIngredients.includes(ing);
+      });
+    });
   }, [inventory]);
-
-  useEffect(() => {
-    calculatePossibleSmoothies();
-  }, [calculatePossibleSmoothies]);
 
   const toggleIngredient = (ingredient: string) => {
     setInventory((prev) => ({

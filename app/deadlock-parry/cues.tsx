@@ -92,8 +92,10 @@ export const synthesizedCuePack: CuePack = {
     noiseFilter.Q.value = 4;
 
     const noiseGain = ctx.createGain();
+    // Fast attack to an audible floor, swell through the wind-up, peak near end.
     noiseGain.gain.setValueAtTime(0.0001, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.32, now + duration * 0.85);
+    noiseGain.gain.exponentialRampToValueAtTime(0.15, now + 0.04);
+    noiseGain.gain.linearRampToValueAtTime(0.45, now + duration * 0.9);
     noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
     noise.connect(noiseFilter);
@@ -120,7 +122,8 @@ export const synthesizedCuePack: CuePack = {
 
     const chargeGain = ctx.createGain();
     chargeGain.gain.setValueAtTime(0.0001, now);
-    chargeGain.gain.exponentialRampToValueAtTime(0.18, now + duration * 0.9);
+    chargeGain.gain.exponentialRampToValueAtTime(0.1, now + 0.05);
+    chargeGain.gain.linearRampToValueAtTime(0.28, now + duration * 0.9);
     chargeGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
     charge1.connect(chargeFilter);

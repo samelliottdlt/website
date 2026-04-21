@@ -37,6 +37,7 @@ export default function DeadlockParryTrainer() {
   const [maxDelayMs, setMaxDelayMs] = useState(2800);
   const [stats, setStats] = useState<Stats>(initialStats);
   const [lastOutcome, setLastOutcome] = useState<RoundOutcome | null>(null);
+  const [showWindupVisual, setShowWindupVisual] = useState(false);
   const [bestReactionMs, setBestReactionMs] = useLocalStorage<number | null>(
     "deadlock-parry:best-reaction-ms",
     null,
@@ -138,6 +139,12 @@ export default function DeadlockParryTrainer() {
       if (!sessionActiveRef.current) return;
       const snap = settingsRef.current;
       windupStartRef.current = performance.now();
+      // Roll once per round whether to show the visual — the trainer's goal
+      // is audio reaction, so a configurable fraction of rounds must stay
+      // silent-to-the-eyes.
+      setShowWindupVisual(
+        Math.random() * 100 < (snap.visualChancePercent ?? 100),
+      );
       setPhase("windup");
       windupHandleRef.current = cuePack.playWindup(snap.windupDurationMs);
 
@@ -338,6 +345,28 @@ export default function DeadlockParryTrainer() {
             }
           />
         </label>
+        <label className="flex flex-col">
+          <span className="font-medium">
+            Visual cue chance: {settings.visualChancePercent ?? 100}%
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={settings.visualChancePercent ?? 100}
+            onChange={(e) =>
+              setSettings((s) => ({
+                ...s,
+                visualChancePercent: Number(e.target.value),
+              }))
+            }
+          />
+          <span className="text-xs text-gray-500">
+            How often the burning-fist visual plays with the audio. Lower = more
+            audio-only rounds.
+          </span>
+        </label>
         <label className="flex flex-col sm:col-span-2">
           <span className="font-medium">
             Delay range: {minDelayMs}–{maxDelayMs}ms
@@ -379,7 +408,7 @@ export default function DeadlockParryTrainer() {
       >
         {phase === "idle" && "Press Start (or Space) to begin"}
         {(phase === "waiting" || phase === "windup") && "Stay alert…"}
-        {phase === "windup" && (
+        {phase === "windup" && showWindupVisual && (
           <WindupVisual durationMs={settings.windupDurationMs} />
         )}
         {phase === "resolved" && outcomeLabel}

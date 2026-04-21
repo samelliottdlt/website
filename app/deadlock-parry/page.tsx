@@ -28,13 +28,16 @@ const initialStats: Stats = {
 };
 
 const RESOLVED_DISPLAY_MS = 900;
+// Random quiet gap between rounds. Kept as a constant because the previous
+// user-facing slider was noise — the whole point of the trainer is to keep
+// the player guessing, and any value in this ballpark accomplishes that.
+const BETWEEN_ROUND_MIN_MS = 800;
+const BETWEEN_ROUND_MAX_MS = 2800;
 
 export default function DeadlockParryTrainer() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [sessionActive, setSessionActive] = useState(false);
   const [settings, setSettings] = useState<ParrySettings>(DEFAULT_SETTINGS);
-  const [minDelayMs, setMinDelayMs] = useState(800);
-  const [maxDelayMs, setMaxDelayMs] = useState(2800);
   const [stats, setStats] = useState<Stats>(initialStats);
   const [lastOutcome, setLastOutcome] = useState<RoundOutcome | null>(null);
   const [showWindupVisual, setShowWindupVisual] = useState(false);
@@ -51,8 +54,6 @@ export default function DeadlockParryTrainer() {
   const nextRoundTimeoutRef = useRef<number | null>(null);
   const phaseRef = useRef<Phase>("idle");
   const sessionActiveRef = useRef(false);
-  const minDelayRef = useRef(minDelayMs);
-  const maxDelayRef = useRef(maxDelayMs);
   const settingsRef = useRef(settings);
 
   useEffect(() => {
@@ -61,12 +62,6 @@ export default function DeadlockParryTrainer() {
   useEffect(() => {
     sessionActiveRef.current = sessionActive;
   }, [sessionActive]);
-  useEffect(() => {
-    minDelayRef.current = minDelayMs;
-  }, [minDelayMs]);
-  useEffect(() => {
-    maxDelayRef.current = maxDelayMs;
-  }, [maxDelayMs]);
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
@@ -134,7 +129,7 @@ export default function DeadlockParryTrainer() {
     setIsNewBest(false);
     setPhase("waiting");
 
-    const delay = randomDelayMs(minDelayRef.current, maxDelayRef.current);
+    const delay = randomDelayMs(BETWEEN_ROUND_MIN_MS, BETWEEN_ROUND_MAX_MS);
     waitingTimeoutRef.current = window.setTimeout(() => {
       if (!sessionActiveRef.current) return;
       const snap = settingsRef.current;
@@ -315,34 +310,16 @@ export default function DeadlockParryTrainer() {
             max={1500}
             step={50}
             value={settings.windupDurationMs}
-            onChange={(e) =>
+            onChange={(e) => {
+              const next = Number(e.target.value);
+              // Parry window always tracks the wind-up 1:1 — matches the
+              // reference implementation and removes a knob nobody tuned.
               setSettings((s) => ({
                 ...s,
-                windupDurationMs: Number(e.target.value),
-                parryWindowMs: Math.min(
-                  s.parryWindowMs,
-                  Number(e.target.value),
-                ),
-              }))
-            }
-          />
-        </label>
-        <label className="flex flex-col">
-          <span className="font-medium">
-            Parry window: {settings.parryWindowMs}ms
-          </span>
-          <input
-            type="range"
-            min={100}
-            max={settings.windupDurationMs}
-            step={25}
-            value={settings.parryWindowMs}
-            onChange={(e) =>
-              setSettings((s) => ({
-                ...s,
-                parryWindowMs: Number(e.target.value),
-              }))
-            }
+                windupDurationMs: next,
+                parryWindowMs: next,
+              }));
+            }}
           />
         </label>
         <label className="flex flex-col">
@@ -366,29 +343,6 @@ export default function DeadlockParryTrainer() {
             How often the burning-fist visual plays with the audio. Lower = more
             audio-only rounds.
           </span>
-        </label>
-        <label className="flex flex-col sm:col-span-2">
-          <span className="font-medium">
-            Delay range: {minDelayMs}–{maxDelayMs}ms
-          </span>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              className="border rounded p-1 w-full"
-              min={0}
-              value={minDelayMs}
-              onChange={(e) => setMinDelayMs(Number(e.target.value))}
-            />
-            <input
-              type="number"
-              className="border rounded p-1 w-full"
-              min={minDelayMs}
-              value={maxDelayMs}
-              onChange={(e) =>
-                setMaxDelayMs(Math.max(minDelayMs, Number(e.target.value)))
-              }
-            />
-          </div>
         </label>
       </div>
 

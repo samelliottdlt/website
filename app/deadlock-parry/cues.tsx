@@ -56,11 +56,140 @@ function getAudioContext(): AudioContext {
   return sharedCtx;
 }
 
-function SynthesizedWindupVisual() {
-  // Deliberately empty: this trainer is meant to build audio-cue reaction,
-  // not visual reaction. The parent panel intentionally does not change
-  // during windup.
-  return null;
+function SynthesizedWindupVisual({ durationMs }: WindupVisualProps) {
+  // A burning swirl around a fist — a bright white-yellow core, rotating
+  // orange/yellow ring flames, radial flame tongues and outflying sparks.
+  // Timings scale with the wind-up length so the burn intensifies alongside
+  // the audio cue.
+  const spinFast = `${Math.max(500, Math.round(durationMs * 0.75))}ms`;
+  const spinSlow = `${Math.max(800, Math.round(durationMs * 1.4))}ms`;
+  const flickerDur = `${Math.max(220, Math.round(durationMs / 4))}ms`;
+
+  const flameCount = 10;
+  const flames = Array.from({ length: flameCount }, (_, i) => ({
+    deg: (360 / flameCount) * i,
+    delay: (i * 53) % 260,
+  }));
+
+  const sparkCount = 14;
+  const sparks = Array.from({ length: sparkCount }, (_, i) => ({
+    deg: (137 * i) % 360, // golden-angle scattering keeps them non-uniform
+    distance: 46 + ((i * 7) % 28),
+    delay: (i * 91) % 600,
+    size: 4 + (i % 3) * 2,
+  }));
+
+  // Ring-shaped reveal for the conic swirls so they read as flame halos,
+  // not filled disks.
+  const ringMask =
+    "radial-gradient(circle, transparent 28%, black 38%, black 78%, transparent 96%)";
+  const ringMaskOuter =
+    "radial-gradient(circle, transparent 34%, black 46%, black 84%, transparent 100%)";
+
+  const swirlInner =
+    "conic-gradient(from 0deg, rgba(253,224,71,0) 0deg, rgba(251,146,60,0) 30deg, rgba(249,115,22,0.85) 80deg, rgba(253,224,71,0.95) 120deg, rgba(255,255,255,0.95) 150deg, rgba(253,224,71,0.95) 180deg, rgba(249,115,22,0.85) 230deg, rgba(251,146,60,0) 300deg, rgba(253,224,71,0) 360deg)";
+  const swirlOuter =
+    "conic-gradient(from 180deg, transparent 0deg, rgba(234,88,12,0) 40deg, rgba(251,146,60,0.75) 100deg, rgba(253,224,71,0.9) 160deg, rgba(251,146,60,0.75) 220deg, rgba(234,88,12,0) 300deg, transparent 360deg)";
+
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 flex items-center justify-center"
+      aria-hidden="true"
+    >
+      <div className="relative flex h-40 w-40 items-center justify-center">
+        {/* Outer heat glow */}
+        <div
+          className="absolute inset-0 -m-10 rounded-full bg-orange-500/60 blur-3xl animate-pulse"
+          style={{ animationDuration: flickerDur }}
+        />
+        {/* Mid ember glow */}
+        <div
+          className="absolute inset-0 -m-4 rounded-full bg-yellow-300/70 blur-2xl animate-pulse"
+          style={{ animationDuration: flickerDur, animationDelay: "60ms" }}
+        />
+        {/* Inner swirl ring */}
+        <div
+          className="absolute inset-0 rounded-full animate-spin mix-blend-screen"
+          style={{
+            background: swirlInner,
+            animationDuration: spinFast,
+            maskImage: ringMask,
+            WebkitMaskImage: ringMask,
+          }}
+        />
+        {/* Outer counter-rotating swirl ring */}
+        <div
+          className="absolute inset-0 rounded-full animate-spin mix-blend-screen"
+          style={{
+            background: swirlOuter,
+            animationDuration: spinSlow,
+            animationDirection: "reverse",
+            maskImage: ringMaskOuter,
+            WebkitMaskImage: ringMaskOuter,
+          }}
+        />
+        {/* Flame tongues, slowly rotating together with individual flicker */}
+        <div
+          className="absolute inset-0 animate-spin"
+          style={{ animationDuration: spinSlow }}
+        >
+          {flames.map(({ deg, delay }) => (
+            <span
+              key={deg}
+              className="absolute left-1/2 top-1/2 h-14 w-3 rounded-full animate-pulse"
+              style={{
+                transform: `translate(-50%, -100%) rotate(${deg}deg) translateY(-2.25rem)`,
+                transformOrigin: "50% 100%",
+                background:
+                  "linear-gradient(to top, rgba(249,115,22,0) 0%, rgba(249,115,22,0.9) 15%, rgba(253,224,71,0.95) 60%, rgba(255,255,255,0.95) 100%)",
+                filter: "blur(1px)",
+                animationDuration: flickerDur,
+                animationDelay: `${delay}ms`,
+              }}
+            />
+          ))}
+        </div>
+        {/* Sparks flying outward */}
+        {sparks.map(({ deg, distance, delay, size }, i) => (
+          <span
+            key={i}
+            className="absolute left-1/2 top-1/2 rounded-full bg-yellow-200 animate-ping"
+            style={{
+              width: size,
+              height: size,
+              transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-${distance}%)`,
+              boxShadow:
+                "0 0 8px rgba(253,224,71,0.95), 0 0 14px rgba(249,115,22,0.7)",
+              animationDuration: `${Math.max(600, Math.round(durationMs / 2))}ms`,
+              animationDelay: `${delay}ms`,
+            }}
+          />
+        ))}
+        {/* Bright hot core */}
+        <div
+          className="absolute rounded-full animate-pulse"
+          style={{
+            width: "4.25rem",
+            height: "4.25rem",
+            background:
+              "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(253,224,71,0.9) 35%, rgba(249,115,22,0.55) 70%, rgba(234,88,12,0) 100%)",
+            filter: "blur(2px)",
+            animationDuration: flickerDur,
+          }}
+        />
+        {/* Fist on top of the blaze */}
+        <span
+          className="relative text-6xl"
+          style={{
+            filter:
+              "drop-shadow(0 0 10px rgba(253,224,71,0.9)) drop-shadow(0 0 18px rgba(249,115,22,0.85))",
+          }}
+        >
+          👊
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export const synthesizedCuePack: CuePack = {

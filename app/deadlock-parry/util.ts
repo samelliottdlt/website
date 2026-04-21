@@ -3,6 +3,12 @@ export type ParryResult = "success" | "too-early" | "miss";
 export type ParrySettings = {
   windupDurationMs: number;
   parryWindowMs: number;
+  /**
+   * Chance (0–100) that the wind-up will show the visual cue. Setting this
+   * below 100 forces the trainee to react to audio alone some of the time,
+   * which is the whole point of the trainer.
+   */
+  visualChancePercent?: number;
 };
 
 export const DEFAULT_SETTINGS: ParrySettings = {
@@ -12,6 +18,7 @@ export const DEFAULT_SETTINGS: ParrySettings = {
   // Source: https://github.com/apxsta/ParryTrainer (RESPONSE_TIME = 1.2).
   windupDurationMs: 1200,
   parryWindowMs: 1200,
+  visualChancePercent: 50,
 };
 
 export function evaluateParryPress(

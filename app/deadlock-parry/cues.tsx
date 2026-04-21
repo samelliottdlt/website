@@ -56,11 +56,65 @@ function getAudioContext(): AudioContext {
   return sharedCtx;
 }
 
-function SynthesizedWindupVisual() {
-  // Deliberately empty: this trainer is meant to build audio-cue reaction,
-  // not visual reaction. The parent panel intentionally does not change
-  // during windup.
-  return null;
+function SynthesizedWindupVisual({ durationMs }: WindupVisualProps) {
+  // A flashing, rotating starburst around a clenched fist — mirrors the
+  // in-game "about to land a heavy" tell that flares over the character's
+  // fist just before the swing connects. The spin/pulse durations are tied
+  // to the wind-up length so the animation peaks with the audio cue.
+  const spinStyle = { animationDuration: `${durationMs}ms` };
+  const glowPulseStyle = {
+    animationDuration: `${Math.max(220, Math.round(durationMs / 3))}ms`,
+  };
+  const starPulseStyle = {
+    animationDuration: `${Math.max(180, Math.round(durationMs / 4))}ms`,
+  };
+
+  const starCount = 8;
+  const stars = Array.from({ length: starCount }, (_, i) => ({
+    deg: (360 / starCount) * i,
+    glyph: i % 2 === 0 ? "✦" : "✧",
+  }));
+
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 flex items-center justify-center"
+      aria-hidden="true"
+    >
+      <div className="relative flex h-32 w-32 items-center justify-center">
+        <div
+          className="absolute inset-0 -m-6 rounded-full bg-yellow-300/70 blur-2xl animate-pulse"
+          style={glowPulseStyle}
+        />
+        <div
+          className="absolute inset-0 rounded-full bg-yellow-200/50 animate-ping"
+          style={glowPulseStyle}
+        />
+        <div
+          className="absolute inset-0 flex items-center justify-center animate-spin"
+          style={spinStyle}
+        >
+          <div className="relative h-32 w-32">
+            {stars.map(({ deg, glyph }) => (
+              <span
+                key={deg}
+                className="absolute left-1/2 top-1/2 text-2xl text-yellow-500 drop-shadow-[0_0_6px_rgba(253,224,71,0.9)] animate-pulse"
+                style={{
+                  transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-3.75rem) rotate(${-deg}deg)`,
+                  animationDuration: starPulseStyle.animationDuration,
+                  animationDelay: `${(deg / 360) * 200}ms`,
+                }}
+              >
+                {glyph}
+              </span>
+            ))}
+          </div>
+        </div>
+        <span className="relative text-6xl drop-shadow-[0_0_14px_rgba(250,204,21,0.95)]">
+          👊
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export const synthesizedCuePack: CuePack = {

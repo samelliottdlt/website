@@ -8,21 +8,21 @@ import {
 describe("evaluateParryPress", () => {
   const settings = { windupDurationMs: 700, parryWindowMs: 500 };
   const windupStart = 1000;
-  // connect time = 1700; parry window = [1200, 1700]
+  // parry window = [1000, 1500] (deadline 500ms after windup cue)
 
   test("press inside parry window → success", () => {
-    expect(evaluateParryPress(1300, windupStart, settings)).toBe("success");
-    expect(evaluateParryPress(1200, windupStart, settings)).toBe("success");
-    expect(evaluateParryPress(1700, windupStart, settings)).toBe("success");
+    expect(evaluateParryPress(1000, windupStart, settings)).toBe("success");
+    expect(evaluateParryPress(1250, windupStart, settings)).toBe("success");
+    expect(evaluateParryPress(1500, windupStart, settings)).toBe("success");
   });
 
-  test("press before parry window → too-early", () => {
-    expect(evaluateParryPress(1000, windupStart, settings)).toBe("too-early");
-    expect(evaluateParryPress(1199, windupStart, settings)).toBe("too-early");
+  test("press before windup cue → too-early", () => {
+    expect(evaluateParryPress(999, windupStart, settings)).toBe("too-early");
+    expect(evaluateParryPress(500, windupStart, settings)).toBe("too-early");
   });
 
-  test("press after connect → miss", () => {
-    expect(evaluateParryPress(1701, windupStart, settings)).toBe("miss");
+  test("press after parry window → miss", () => {
+    expect(evaluateParryPress(1501, windupStart, settings)).toBe("miss");
     expect(evaluateParryPress(5000, windupStart, settings)).toBe("miss");
   });
 
@@ -64,8 +64,8 @@ describe("makeOutcome", () => {
   });
   test("early press → too-early", () => {
     expect(
-      makeOutcome({ pressed: true, pressTimeMs: 1100 }, 1000, settings),
-    ).toEqual({ kind: "too-early", reactionMs: 100 });
+      makeOutcome({ pressed: true, pressTimeMs: 900 }, 1000, settings),
+    ).toEqual({ kind: "too-early", reactionMs: 0 });
   });
   test("late press → hit", () => {
     expect(

@@ -8,8 +8,7 @@ export type ParrySettings = {
 export const DEFAULT_SETTINGS: ParrySettings = {
   // Upstream reference implementation (apxsta/ParryTrainer) treats the heavy
   // melee alert as the start of a 1.2s reaction deadline — any F-press within
-  // that window counts as a parry. We match that model by setting the window
-  // equal to the windup duration (no "too-early" state by default).
+  // that window counts as a parry.
   // Source: https://github.com/apxsta/ParryTrainer (RESPONSE_TIME = 1.2).
   windupDurationMs: 1200,
   parryWindowMs: 1200,
@@ -20,10 +19,11 @@ export function evaluateParryPress(
   windupStartMs: number,
   settings: ParrySettings,
 ): ParryResult {
-  const connectTime = windupStartMs + settings.windupDurationMs;
-  const windowStart = connectTime - settings.parryWindowMs;
-  if (pressTimeMs < windowStart) return "too-early";
-  if (pressTimeMs > connectTime) return "miss";
+  // The parry window is a reaction deadline that starts at the windup cue.
+  // A press is valid anywhere in [windupStart, windupStart + parryWindow].
+  const windowEnd = windupStartMs + settings.parryWindowMs;
+  if (pressTimeMs < windupStartMs) return "too-early";
+  if (pressTimeMs > windowEnd) return "miss";
   return "success";
 }
 

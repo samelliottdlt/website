@@ -1,6 +1,7 @@
 import "../styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import Sidebar from "../components/Sidebar";
 
 export const metadata = {
@@ -32,7 +33,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <div className="flex min-h-screen">
-          <Sidebar />
+          <Suspense fallback={null}>
+            <Sidebar />
+          </Suspense>
           <main className="flex-1 p-4 h-screen overflow-y-auto box-border">
             {children}
           </main>

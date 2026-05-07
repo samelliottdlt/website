@@ -62,7 +62,7 @@ export type CounterTiers =
 // derived from this record rather than declared separately.
 export const COUNTERS_BY_HERO = {
   Abrams: [Items.ReactiveBarrier, Items.Rebuttal],
-  Apollo: [Items.SlowingHex, Items.Counterspell],
+  Apollo: [Items.RestorativeLocket, Items.SlowingHex, Items.Counterspell],
   Bebop: [Items.ReactiveBarrier, Items.Counterspell, Items.DispelMagic],
   Billy: [Items.ReactiveBarrier, Items.Rebuttal, Items.Counterspell],
   Calico: [Items.EnchantersEmblem, Items.Rebuttal],

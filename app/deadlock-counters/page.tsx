@@ -242,7 +242,15 @@ export default function DeadlockCountersPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-1 mb-3">
+        {/*
+          CSS Grid (rather than flex-wrap) so that wrap points are determined
+          by container width / track size, not by cumulative chip widths.
+          Sub-pixel rendering differences between selected/unselected chips
+          (e.g. ClearType against indigo vs white) used to accumulate over a
+          row and flip the wrap boundary; with grid each row has a fixed
+          column count regardless of state.
+        */}
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-1 mb-3">
           {filtered.map(({ hero }) => {
             const inGame = game.has(hero);
             const inLane = lane.has(hero);
@@ -251,12 +259,8 @@ export default function DeadlockCountersPage() {
               <button
                 key={hero}
                 onClick={() => toggle(hero, mode)}
-                // The class string is structured so that every state combo
-                // produces the same border / ring / overlay footprint —
-                // only colors change. This prevents the row from reflowing
-                // (overflowing into a new line) when chips toggle state.
                 className={
-                  "relative px-2 py-1 rounded-full border text-xs leading-none transition-colors ring-2 ring-offset-1 " +
+                  "relative px-2 py-1 rounded-full border text-xs leading-none text-center transition-colors ring-2 ring-offset-1 truncate " +
                   (inGame
                     ? "bg-indigo-600 border-indigo-600 text-white"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100") +
@@ -276,7 +280,7 @@ export default function DeadlockCountersPage() {
             );
           })}
           {filtered.length === 0 && (
-            <span className="text-xs text-gray-500 italic">
+            <span className="text-xs text-gray-500 italic col-span-full">
               No heroes match
             </span>
           )}

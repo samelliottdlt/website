@@ -36,7 +36,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <Sidebar />
           </Suspense>
-          <main className="flex-1 p-4 h-screen overflow-y-auto box-border">
+          <main className="flex-1 p-4 h-screen overflow-y-auto box-border [scrollbar-gutter:stable]">
             {children}
           </main>
         </div>

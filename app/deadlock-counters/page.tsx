@@ -243,14 +243,12 @@ export default function DeadlockCountersPage() {
         )}
 
         {/*
-          CSS Grid (rather than flex-wrap) so that wrap points are determined
-          by container width / track size, not by cumulative chip widths.
-          Sub-pixel rendering differences between selected/unselected chips
-          (e.g. ClearType against indigo vs white) used to accumulate over a
-          row and flip the wrap boundary; with grid each row has a fixed
-          column count regardless of state.
+          Natural-width chips with flex-wrap. The scroll container reserves
+          scrollbar space via `scrollbar-gutter: stable` in the root layout,
+          so the chip row's available width stays constant regardless of
+          whether the page has overflowed vertically yet.
         */}
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-1 mb-3">
+        <div className="flex flex-wrap gap-1 mb-3">
           {filtered.map(({ hero }) => {
             const inGame = game.has(hero);
             const inLane = lane.has(hero);
@@ -260,7 +258,7 @@ export default function DeadlockCountersPage() {
                 key={hero}
                 onClick={() => toggle(hero, mode)}
                 className={
-                  "relative px-2 py-1 rounded-full border text-xs leading-none text-center transition-colors ring-2 ring-offset-1 truncate " +
+                  "relative px-2 py-1 rounded-full border text-xs leading-none transition-colors ring-2 ring-offset-1 " +
                   (inGame
                     ? "bg-indigo-600 border-indigo-600 text-white"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100") +
@@ -280,7 +278,7 @@ export default function DeadlockCountersPage() {
             );
           })}
           {filtered.length === 0 && (
-            <span className="text-xs text-gray-500 italic col-span-full">
+            <span className="text-xs text-gray-500 italic">
               No heroes match
             </span>
           )}

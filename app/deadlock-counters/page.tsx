@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COUNTERS, type Hero, type Item, tierWeight } from "./data";
+import { anyHeroMatches, normalize } from "./util";
 
 // Deadlock teams are 6v6, so any selection beyond 6 enemies can't reflect a
 // real game and is almost certainly a stale chip the user forgot to clear.
@@ -64,9 +65,15 @@ const MODES: { id: Mode; label: string; emoji: string }[] = [
   { id: "problem", label: "Problem", emoji: "⚠️" },
 ];
 
-function normalize(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
+// Suffix keys that commit the current top match in a specific mode without
+// pressing Enter. Only fire when typing the key would no longer match any
+// hero name, so they don't shadow valid in-name characters (e.g. typing
+// "apol" -> "apoll" still filters to Apollo and doesn't trigger lane).
+const MODIFIER_KEYS: Record<string, Mode> = {
+  l: "lane",
+  p: "problem",
+  g: "game",
+};
 
 export default function DeadlockCountersPage() {
   const [game, setGame] = useState<Set<Hero>>(new Set());
@@ -151,9 +158,25 @@ export default function DeadlockCountersPage() {
       e.preventDefault();
       toggle(filtered[0].hero, mode);
       setQuery("");
-    } else if (e.key === "Escape") {
-      setQuery("");
+      return;
     }
+    if (e.key === "Escape") {
+      setQuery("");
+      return;
+    }
+
+    // Suffix-modifier shortcut: if the user is mid-search and presses a
+    // modifier key (l/p/g) that would dead-end the filter, treat it as a
+    // mode override and commit the top match without an Enter press.
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const targetMode = MODIFIER_KEYS[e.key.toLowerCase()];
+    if (!targetMode) return;
+    if (filtered.length === 0) return;
+    if (query.length === 0) return;
+    if (anyHeroMatches(query + e.key)) return;
+    e.preventDefault();
+    toggle(filtered[0].hero, targetMode);
+    setQuery("");
   };
 
   const gameAgg = useMemo(() => aggregate(game, problem), [game, problem]);
@@ -228,7 +251,7 @@ export default function DeadlockCountersPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleSearchKey}
-          placeholder="Type to filter, Enter to add top match…"
+          placeholder="Filter heroes — Enter / l (lane) / p (problem) / g (game)"
           className="w-full px-2 py-1 mb-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
 

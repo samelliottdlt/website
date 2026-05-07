@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { categories, getItemEmoji } from "../lib/navigation";
 import { classNames } from "../lib/util";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
+// Query param that hides the sidebar entirely. Useful when embedding a page
+// in a fixed-size surface like a KDE web widget where the chrome would steal
+// space from the actual content.
+const HIDE_PARAM = "nochrome";
+const HIDE_VALUES = new Set(["1", "true", "yes"]);
+
 export default function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Use the reusable localStorage hook
   const [isCollapsed, setIsCollapsed] = useLocalStorage(
@@ -19,6 +26,9 @@ export default function Sidebar() {
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
+
+  const hideValue = searchParams?.get(HIDE_PARAM)?.toLowerCase() ?? "";
+  if (HIDE_VALUES.has(hideValue)) return null;
 
   return (
     <nav

@@ -20,6 +20,7 @@ export const categories: NavigationCategory[] = [
   {
     title: "Gaming",
     items: [
+      { name: "Deadlock Counters", href: "/deadlock-counters", emoji: "🎯" },
       { name: "Deadlock Parry Trainer", href: "/deadlock-parry", emoji: "🛡️" },
       { name: "Fusion Calculator", href: "/fusion-calculator", emoji: "⚡" },
       { name: "Game of the Year", href: "/game-of-the-year", emoji: "🏆" },

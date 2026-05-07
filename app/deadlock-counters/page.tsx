@@ -251,21 +251,27 @@ export default function DeadlockCountersPage() {
               <button
                 key={hero}
                 onClick={() => toggle(hero, mode)}
+                // The class string is structured so that every state combo
+                // produces the same border / ring / overlay footprint —
+                // only colors change. This prevents the row from reflowing
+                // (overflowing into a new line) when chips toggle state.
                 className={
-                  "relative px-2 py-1 rounded-full border text-xs leading-none transition-colors " +
+                  "relative px-2 py-1 rounded-full border text-xs leading-none transition-colors ring-2 ring-offset-1 " +
                   (inGame
                     ? "bg-indigo-600 border-indigo-600 text-white"
                     : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100") +
-                  (inLane ? " ring-2 ring-amber-400 ring-offset-1" : "")
+                  (inLane ? " ring-amber-400" : " ring-transparent")
                 }
               >
                 {hero}
-                {isProblem && (
-                  <span
-                    className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border border-white"
-                    aria-label="problem"
-                  />
-                )}
+                <span
+                  aria-hidden={!isProblem}
+                  aria-label={isProblem ? "problem" : undefined}
+                  className={
+                    "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border border-white transition-opacity " +
+                    (isProblem ? "opacity-100" : "opacity-0")
+                  }
+                />
               </button>
             );
           })}

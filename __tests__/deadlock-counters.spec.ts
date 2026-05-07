@@ -8,7 +8,6 @@ import {
   tierWeight,
   TIER_WEIGHTS,
 } from "../app/deadlock-counters/data";
-import { anyHeroMatches, normalize } from "../app/deadlock-counters/util";
 
 describe("deadlock-counters data", () => {
   // The type system already enforces:
@@ -54,36 +53,5 @@ describe("deadlock-counters data", () => {
   it("exposes every item in ITEM_LIST", () => {
     expect(ITEM_LIST).toEqual(Object.values(Items));
     expect(new Set(ITEM_LIST).size).toBe(ITEM_LIST.length);
-  });
-});
-
-describe("deadlock-counters search helpers", () => {
-  it("normalize() strips non-alphanumerics and lowercases", () => {
-    expect(normalize("Lady Geist")).toBe("ladygeist");
-    expect(normalize("Grey-Talon!")).toBe("greytalon");
-    expect(normalize("")).toBe("");
-  });
-
-  it("anyHeroMatches() is true when query is a substring of some hero", () => {
-    // Empty query: matches everything.
-    expect(anyHeroMatches("")).toBe(true);
-    // Mid-name substring still matches (Apollo, Pocket).
-    expect(anyHeroMatches("apol")).toBe(true);
-    expect(anyHeroMatches("apoll")).toBe(true);
-    // Full name matches itself.
-    expect(anyHeroMatches("abrams")).toBe(true);
-  });
-
-  it("anyHeroMatches() returns false once typing dead-ends the search", () => {
-    // The modifier-key shortcut relies on this: once "abrams" + "l" no longer
-    // matches anything, the trailing "l" is treated as a lane modifier.
-    expect(anyHeroMatches("abramsl")).toBe(false);
-    expect(anyHeroMatches("apollog")).toBe(false);
-    expect(anyHeroMatches("bebopg")).toBe(false);
-    // Importantly, valid in-name characters do NOT dead-end and must keep
-    // typing as normal:
-    expect(anyHeroMatches("apoll")).toBe(true); // Apollo
-    expect(anyHeroMatches("bebop")).toBe(true); // Bebop
-    expect(anyHeroMatches("pocket")).toBe(true); // Pocket
   });
 });

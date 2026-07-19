@@ -1,3 +1,11 @@
+<!-- BEGIN:nextjs-agent-rules -->
+
+# Next.js: ALWAYS read docs before coding
+
+Before any Next.js work, find and read the relevant doc in `node_modules/next/dist/docs/`. Your training data is outdated — the docs are the source of truth.
+
+<!-- END:nextjs-agent-rules -->
+
 # Coding agent guidance
 
 ## Instruction hierarchy
@@ -15,10 +23,6 @@ invariants.
 This is a personal Next.js App Router site containing independent interactive
 tools and an MDX-backed blog. Use `package.json` and `.nvmrc` as the source of
 truth for tool versions.
-
-Before changing Next.js behavior, read the relevant documentation in
-`node_modules/next/dist/docs/`. The installed docs take precedence over
-remembered framework behavior.
 
 ## Repository map
 

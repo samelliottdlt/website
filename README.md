@@ -38,6 +38,12 @@ Check lint rules:
 npm run lint
 ```
 
+Run the TypeScript 7 type checker:
+
+```bash
+npm run typecheck
+```
+
 Validate formatting with Prettier:
 
 ```bash

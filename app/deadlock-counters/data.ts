@@ -53,9 +53,7 @@ export const MAX_TIERS = TIER_WEIGHTS.length;
 
 // 1–3 ordered items, strongest first.
 export type CounterTiers =
-  | readonly [Item]
-  | readonly [Item, Item]
-  | readonly [Item, Item, Item];
+  readonly [Item] | readonly [Item, Item] | readonly [Item, Item, Item];
 
 // Hero → tiers. Object literal so duplicate hero keys are caught by TS at
 // compile time. `satisfies` preserves the literal key types so `Hero` is
@@ -71,11 +69,7 @@ export const COUNTERS_BY_HERO = {
   Drifter: [Items.RustedBarrel, Items.Suppressor, Items.DisarmingHex],
   Dynamo: [Items.ReactiveBarrier, Items.SilenceWave, Items.SlowingHex],
   Graves: [Items.RestorativeLocket, Items.MonsterRounds],
-  "Grey Talon": [
-    Items.RestorativeLocket,
-    Items.Counterspell,
-    Items.Knockdown,
-  ],
+  "Grey Talon": [Items.RestorativeLocket, Items.Counterspell, Items.Knockdown],
   Haze: [Items.ReactiveBarrier, Items.MetalSkin, Items.ReturnFire],
   Holiday: [Items.DebuffReducer, Items.SlowingHex, Items.RescueBeam],
   Infernus: [Items.DispelMagic, Items.DebuffReducer, Items.Counterspell],

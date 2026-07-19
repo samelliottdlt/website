@@ -1,10 +1,11 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
-module.exports = {
-  preset: "ts-jest",
+const nextJest = require("next/jest");
+
+const createJestConfig = nextJest({ dir: "./" });
+
+/** @type {import('jest').Config} */
+const config = {
+  coverageProvider: "v8",
   testEnvironment: "node",
-  globals: {
-    "ts-jest": {
-      tsconfig: "tsconfig.jest.json",
-    },
-  },
 };
+
+module.exports = createJestConfig(config);

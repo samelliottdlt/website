@@ -1,3 +1,4 @@
+import { describe, expect, test } from "@jest/globals";
 import { utf8ByteCount, formatByteSize } from "../lib/utf8";
 
 describe("utf8 utilities", () => {

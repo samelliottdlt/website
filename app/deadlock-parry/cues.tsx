@@ -32,7 +32,7 @@ export type CueHandle = {
   stop: () => void;
 };
 
-export type WindupVisualProps = {
+type WindupVisualProps = {
   durationMs: number;
 };
 
@@ -192,7 +192,7 @@ function SynthesizedWindupVisual({ durationMs }: WindupVisualProps) {
   );
 }
 
-export const synthesizedCuePack: CuePack = {
+const synthesizedCuePack: CuePack = {
   name: "Synthesized (placeholder)",
   description:
     "Web Audio-synthesized cues. Safe for public deploy (no game assets).",
@@ -386,7 +386,6 @@ export const synthesizedCuePack: CuePack = {
 /*                                                                            */
 /*  Example (drop real files into /public/deadlock-parry/):                   */
 /*                                                                            */
-/*    import { createAssetCuePack } from "./cues";                            */
 /*    export const cuePack = createAssetCuePack({                             */
 /*      name: "Deadlock",                                                     */
 /*      windupAudioSrc: "/deadlock-parry/windup.ogg",                         */
@@ -399,7 +398,7 @@ export const synthesizedCuePack: CuePack = {
 /*  pass `WindupVisual` directly instead of `windupVisualSrc`.                */
 /* -------------------------------------------------------------------------- */
 
-export type AssetCuePackOptions = {
+type AssetCuePackOptions = {
   name: string;
   description?: string;
   windupAudioSrc: string;
@@ -416,7 +415,7 @@ export type AssetCuePackOptions = {
   fallback?: CuePack;
 };
 
-export function createAssetCuePack(opts: AssetCuePackOptions): CuePack {
+function createAssetCuePack(opts: AssetCuePackOptions): CuePack {
   const fallback = opts.fallback ?? synthesizedCuePack;
   const availability = new Map<string, boolean>();
 

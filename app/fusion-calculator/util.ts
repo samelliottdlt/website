@@ -28,7 +28,7 @@ export type Node = {
 };
 export type NodeMap = Map<Card, Node>;
 // fusion material to fusion destination
-export type Edges = Map<Card, Card>;
+type Edges = Map<Card, Card>;
 
 export type CardsMappedById = Map<number, Card>;
 

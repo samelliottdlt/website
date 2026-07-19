@@ -12,15 +12,21 @@ permissions:
 jobs:
   review-and-enable-auto-merge:
     name: Copilot review
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'samelliottdlt/website'
     runs-on: ubuntu-latest
+    env:
+      IS_DEPENDABOT: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'samelliottdlt/website' }}
     steps:
+      - name: Skip Copilot review for other pull requests
+        if: env.IS_DEPENDABOT != 'true'
+        run: echo "Copilot review is required only for Dependabot pull requests."
       - name: Fetch Dependabot metadata
+        if: env.IS_DEPENDABOT == 'true'
         id: metadata
         uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Request Copilot review
+        if: env.IS_DEPENDABOT == 'true'
         run: |
           if ! gh api "$REVIEWERS_URL" --jq '.users[].login' | grep -Fxq "$COPILOT_REVIEWER"; then
             gh api --method POST "$REVIEWERS_URL" -f "reviewers[]=$COPILOT_REVIEWER"
@@ -30,6 +36,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVIEWERS_URL: repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers
       - name: Wait for Copilot review
+        if: env.IS_DEPENDABOT == 'true'
         run: |
           for attempt in {1..60}; do
             if gh api "$REVIEWS_URL" --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | .commit_id' | grep -Fxq "$HEAD_SHA"; then
@@ -45,9 +52,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           REVIEWS_URL: repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews
       - name: Enable auto-merge for minor and patch updates
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        if: env.IS_DEPENDABOT == 'true' && (steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch')
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

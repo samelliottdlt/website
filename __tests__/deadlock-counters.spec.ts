@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import {
   COUNTERS,
   COUNTERS_BY_HERO,

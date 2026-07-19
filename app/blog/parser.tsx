@@ -38,11 +38,9 @@ export function getSortedPostsData(): Post[] {
   });
 }
 
-export interface PostData {
-  id: string;
-  date: string;
+type PostData = {
   title: string;
-}
+};
 
 const components = {
   h1: (props: object) => <h1 className="text-4xl font-bold" {...props} />,
@@ -90,16 +88,4 @@ export async function parsePost(slug: string) {
     content,
     frontmatter: frontmatter as unknown as PostData,
   };
-}
-
-export function getAllPostIds() {
-  const fileNames = fs.readdirSync(postsDirectory);
-
-  return fileNames.map((fileName) => {
-    return {
-      params: {
-        id: fileName.replace(/\.md$/, ""),
-      },
-    };
-  });
 }

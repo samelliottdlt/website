@@ -7,7 +7,7 @@ export interface Beat {
 }
 
 // Scale definitions - semitone intervals from root note
-export const SCALES = {
+const SCALES = {
   chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // All notes
   major: [0, 2, 4, 5, 7, 9, 11], // Major scale
   minor: [0, 2, 3, 5, 7, 8, 10], // Natural minor scale
@@ -75,10 +75,7 @@ export function getScaleNotes(
 }
 
 // Find the nearest note in a scale for transposition
-export function findNearestScaleNote(
-  noteIndex: number,
-  scaleNotes: number[],
-): number {
+function findNearestScaleNote(noteIndex: number, scaleNotes: number[]): number {
   if (scaleNotes.includes(noteIndex)) {
     return noteIndex; // Note is already in scale
   }

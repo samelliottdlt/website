@@ -1,29 +1,119 @@
 name: Dependabot auto-merge
 
 on:
-  pull_request:
-    branches: ["main"]
-    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Dependabot pull request number
+        required: true
+        type: string
+      head_sha:
+        description: Commit approved by the dependency agent
+        required: true
+        type: string
 
 permissions:
+  actions: read
+  checks: read
   contents: write
   pull-requests: write
 
 jobs:
   enable-auto-merge:
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'samelliottdlt/website'
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Enable auto-merge for minor and patch updates
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-patch'
-        run: gh pr merge --auto --squash "$PR_URL"
+      - name: Validate exact-SHA merge policy
         env:
+          APPROVED_SHA: ${{ inputs.head_sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          set -euo pipefail
+
+          PR=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")
+
+          AUTHOR=$(jq -r '.user.login' <<<"$PR")
+          HEAD_REPO=$(jq -r '.head.repo.full_name' <<<"$PR")
+          HEAD_REF=$(jq -r '.head.ref' <<<"$PR")
+          HEAD_SHA=$(jq -r '.head.sha' <<<"$PR")
+          STATE=$(jq -r '.state' <<<"$PR")
+          TITLE=$(jq -r '.title' <<<"$PR")
+
+          test "$AUTHOR" = "dependabot[bot]"
+          test "$HEAD_REPO" = "$GITHUB_REPOSITORY"
+          [[ "$HEAD_REF" == dependabot/* ]]
+          test "$HEAD_SHA" = "$APPROVED_SHA"
+          test "$STATE" = "open"
+
+          if gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/requested_reviewers" \
+            --jq '.users[].login' | grep -Fxq "samelliottdlt"; then
+            echo "Human review has been requested; auto-merge is disabled." >&2
+            exit 1
+          fi
+
+          CHECKS=$(gh api \
+            "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/check-runs?per_page=100")
+
+          jq -e '
+            [.check_runs[] | select(.name == "Dependency agent audit")] |
+            sort_by(.started_at) |
+            last |
+            .status == "completed" and .conclusion == "success"
+          ' <<<"$CHECKS" >/dev/null
+
+          jq -e '
+            [.check_runs[] | select(.name == "build (24.x)")] |
+            sort_by(.started_at) |
+            last |
+            .status == "completed" and .conclusion == "success"
+          ' <<<"$CHECKS" >/dev/null
+
+          VERSION_CHANGE=$(sed -nE \
+            's/^.* from v?([0-9]+\.[0-9]+\.[0-9]+[^ ]*) to v?([0-9]+\.[0-9]+\.[0-9]+[^ ]*).*$/\1 \2/p' \
+            <<<"$TITLE")
+
+          if [ -z "$VERSION_CHANGE" ]; then
+            echo "Cannot prove this is a single semver patch/minor update." >&2
+            exit 1
+          fi
+
+          read -r OLD_VERSION NEW_VERSION <<<"$VERSION_CHANGE"
+
+          node - "$OLD_VERSION" "$NEW_VERSION" <<'NODE'
+          const [oldVersion, newVersion] = process.argv.slice(2).map((version) => {
+            const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
+            if (!match) throw new Error(`Invalid semver: ${version}`);
+            return match.slice(1).map(Number);
+          });
+
+          const [oldMajor, oldMinor, oldPatch] = oldVersion;
+          const [newMajor, newMinor, newPatch] = newVersion;
+          const isAllowed =
+            newMajor === oldMajor &&
+            (
+              newMinor > oldMinor ||
+              (newMinor === oldMinor && newPatch > oldPatch)
+            );
+
+          if (!isAllowed) {
+            throw new Error("Only forward semver patch/minor updates may auto-merge.");
+          }
+          NODE
+
+          CHANGED_FILES=$(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" \
+            --jq '.[].filename')
+
+          if grep -Eq \
+            '(^|/)(AGENTS|CLAUDE|GEMINI)\.md$|^\.github/|^next\.config\.|^middleware\.|^app/.*/(route|middleware)\.' \
+            <<<"$CHANGED_FILES"; then
+            echo "The update touches a protected or deployment-sensitive path." >&2
+            exit 1
+          fi
+
+      - name: Enable squash auto-merge
+        env:
+          APPROVED_SHA: ${{ inputs.head_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: https://github.com/${{ github.repository }}/pull/${{ inputs.pr_number }}
+        run: gh pr merge --auto --squash --match-head-commit "$APPROVED_SHA" "$PR_URL"

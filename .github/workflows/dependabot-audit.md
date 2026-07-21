@@ -97,6 +97,34 @@ steps:
       node-version: 24
       cache: npm
 
+post-steps:
+  - name: Require a decisive agent outcome
+    if: always()
+    run: |
+      set -euo pipefail
+
+      if [ ! -s "$GH_AW_SAFE_OUTPUTS" ]; then
+        echo "The dependency agent produced no safe output." >&2
+        exit 1
+      fi
+
+      DECISION_COUNT=$(jq -s '
+        [
+          .[] |
+          select(
+            .type == "push_to_pull_request_branch" or
+            .type == "record_dependency_audit"
+          )
+        ] |
+        length
+      ' "$GH_AW_SAFE_OUTPUTS")
+
+      if [ "$DECISION_COUNT" -ne 1 ]; then
+        echo "The dependency agent must produce exactly one repair or audit decision." >&2
+        cat "$GH_AW_SAFE_OUTPUTS" >&2
+        exit 1
+      fi
+
 safe-outputs:
   push-to-pull-request-branch:
     target: "*"
@@ -266,11 +294,24 @@ timeout-minutes: 30
 
 # Dependabot audit and repair agent
 
-You own the audit of Dependabot pull request
-**#${{ steps.pull-request.outputs.number }}** at commit
-**${{ steps.pull-request.outputs.ref }}** in `${{ github.repository }}`.
+You own the audit of one Dependabot pull request in `${{ github.repository }}`.
+
+{{#if github.event.inputs.pr_number}}
+
+This is a manual audit of pull request **#${{ github.event.inputs.pr_number }}**.
+
+{{/if}}
+
+{{#if github.event.workflow_run.head_sha}}
+
+The `Node.js CI` workflow completed at commit
+`${{ github.event.workflow_run.head_sha }}`.
+
+{{/if}}
 
 The pull request branch is checked out. Read `AGENTS.md` before making decisions.
+Resolve the PR from the explicit number above or from the checked-out head SHA. Do not
+stop merely because a custom-step output is unavailable.
 
 ## Safety invariants
 
@@ -301,12 +342,17 @@ The pull request branch is checked out. Read `AGENTS.md` before making decisions
 
 ### Repair
 
-You may make one repair attempt when CI fails and the fix is small, mechanical,
-behavior-preserving, and does not touch a protected file.
+You may make one repair attempt when CI fails and the migration can be implemented
+confidently without touching a protected file. This applies to major updates as well
+as patch and minor updates.
 
 - Count prior commits whose subject starts with `fix(deps):`.
 - If there are already two such commits, do not attempt another fix.
-- Implement the smallest source or test compatibility change.
+- For a major update, follow the upstream migration guide and implement the necessary
+  source and test changes, even when they span multiple call sites. Keep the work
+  focused on the dependency migration and avoid unrelated refactoring.
+- For patch and minor updates, implement only a small, mechanical, behavior-preserving
+  compatibility change.
 - Run `npm run prettier`, `npm run lint`, `npm run typecheck`, `npm test`, and
   `npm run build`.
 - Commit with `fix(deps): <concise explanation>`.
@@ -336,7 +382,8 @@ judgment is required.
 Call `record_dependency_audit` with `conclusion: action_required` when any of these
 apply:
 
-- the update is semver major;
+- the update is semver major and either needs human judgment before implementation or
+  has been repaired and now passes CI;
 - CI remains red after two repair attempts;
 - protected files or dependency constraints must change;
 - behavior, architecture, security, data, deployment, or public APIs may change;
@@ -349,4 +396,6 @@ the evidence, attempted repairs, remaining risk, and the decision needed from th
 human reviewer.
 
 Finish by calling exactly one of `push_to_pull_request_branch` or
-`record_dependency_audit`.
+`record_dependency_audit`. Never call `report_incomplete`; when information is
+missing or confidence is insufficient, record `action_required` and explain what the
+human reviewer must determine.

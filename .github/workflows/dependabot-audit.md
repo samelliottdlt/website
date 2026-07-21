@@ -103,25 +103,25 @@ post-steps:
     run: |
       set -euo pipefail
 
-      if [ ! -s "$GH_AW_SAFE_OUTPUTS" ]; then
-        echo "The dependency agent produced no safe output." >&2
+      if [ ! -s "$GH_AW_AGENT_OUTPUT" ]; then
+        echo "The dependency agent produced no output." >&2
         exit 1
       fi
 
-      DECISION_COUNT=$(jq -s '
+      DECISION_COUNT=$(jq '
         [
-          .[] |
+          .items[] |
           select(
             .type == "push_to_pull_request_branch" or
             .type == "record_dependency_audit"
           )
         ] |
         length
-      ' "$GH_AW_SAFE_OUTPUTS")
+      ' "$GH_AW_AGENT_OUTPUT")
 
       if [ "$DECISION_COUNT" -ne 1 ]; then
         echo "The dependency agent must produce exactly one repair or audit decision." >&2
-        cat "$GH_AW_SAFE_OUTPUTS" >&2
+        cat "$GH_AW_AGENT_OUTPUT" >&2
         exit 1
       fi
 

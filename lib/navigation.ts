@@ -45,6 +45,11 @@ export const categories: NavigationCategory[] = [
         href: "/music-sequencer",
         emoji: "🎶",
       },
+      {
+        name: "Cross Stitch Editor",
+        href: "/cross-stitch-editor",
+        emoji: "🧵",
+      },
     ],
   },
 ];

@@ -18,7 +18,11 @@ if: >-
   github.event_name == 'workflow_dispatch' ||
   github.event.workflow_run.event == 'pull_request'
 
-engine: copilot
+# Pinned deliberately so an upstream default change cannot alter audit
+# behavior. Bump this occasionally and re-run `gh aw compile`.
+engine:
+  id: copilot
+  model: claude-opus-5
 strict: true
 max-daily-ai-credits: 20000
 

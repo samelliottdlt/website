@@ -73,13 +73,13 @@ jobs:
             <<<"$TITLE")
 
           if [ -z "$VERSION_CHANGE" ]; then
-            echo "Cannot prove this is a single semver patch/minor update." >&2
+            echo "Cannot prove this is a single-package semver update." >&2
             exit 1
           fi
 
           read -r OLD_VERSION NEW_VERSION <<<"$VERSION_CHANGE"
 
-          node - "$OLD_VERSION" "$NEW_VERSION" <<'NODE'
+          UPDATE_CLASS=$(node - "$OLD_VERSION" "$NEW_VERSION" <<'NODE'
           const [oldVersion, newVersion] = process.argv.slice(2).map((version) => {
             const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
             if (!match) throw new Error(`Invalid semver: ${version}`);
@@ -88,17 +88,42 @@ jobs:
 
           const [oldMajor, oldMinor, oldPatch] = oldVersion;
           const [newMajor, newMinor, newPatch] = newVersion;
-          const isAllowed =
-            newMajor === oldMajor &&
-            (
-              newMinor > oldMinor ||
-              (newMinor === oldMinor && newPatch > oldPatch)
-            );
 
-          if (!isAllowed) {
-            throw new Error("Only forward semver patch/minor updates may auto-merge.");
+          if (newMajor > oldMajor) {
+            process.stdout.write("major");
+          } else if (
+            newMajor === oldMajor &&
+            (newMinor > oldMinor || (newMinor === oldMinor && newPatch > oldPatch))
+          ) {
+            process.stdout.write("patch-minor");
+          } else {
+            throw new Error("Only forward semver updates may auto-merge.");
           }
           NODE
+          )
+
+          if [ "$UPDATE_CLASS" = "major" ]; then
+            PACKAGE=$(sed -nE 's/^.*[Bb]ump ([^ ]+) from .*$/\1/p' <<<"$TITLE")
+
+            if [ -z "$PACKAGE" ]; then
+              echo "Cannot identify the package in a major update title." >&2
+              exit 1
+            fi
+
+            MANIFEST=$(gh api \
+              "repos/$GITHUB_REPOSITORY/contents/package.json?ref=$HEAD_SHA" \
+              --jq '.content' | base64 -d)
+
+            # Major updates may only merge unattended when the package is a
+            # development dependency, so shipped site behavior cannot change.
+            if ! jq -e \
+              --arg pkg "$PACKAGE" \
+              '(.devDependencies[$pkg] != null) and (.dependencies[$pkg] == null)' \
+              <<<"$MANIFEST" >/dev/null; then
+              echo "Major updates to runtime dependencies require human review." >&2
+              exit 1
+            fi
+          fi
 
           CHANGED_FILES=$(gh api --paginate \
             "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" \

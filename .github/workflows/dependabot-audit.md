@@ -52,8 +52,27 @@ steps:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       PR_INPUT: ${{ github.event.inputs.pr_number }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_AW_SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
     run: |
       set -euo pipefail
+
+      # Dependabot rebases its open pull requests whenever one of them merges, so
+      # a completed CI run routinely reports back for a head commit that is no
+      # longer open. That stale run has nothing to audit, and it is not a
+      # failure: emit a noop so the agent is skipped without burning credits.
+      skip_stale_run() {
+        echo "$1" >&2
+
+        if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          exit 1
+        fi
+
+        mkdir -p "$(dirname "$GH_AW_SAFE_OUTPUTS")"
+        jq -n -c --arg message "$1" '{type: "noop", message: $message}' \
+          >> "$GH_AW_SAFE_OUTPUTS"
+        echo "found=false" >> "$GITHUB_OUTPUT"
+        exit 0
+      }
 
       if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
         PR_NUMBER="$PR_INPUT"
@@ -70,8 +89,7 @@ steps:
       fi
 
       if [ -z "$PR_NUMBER" ] || [ -z "$REF" ]; then
-        echo "No open Dependabot pull request matches this workflow run." >&2
-        exit 1
+        skip_stale_run "No open Dependabot pull request matches this workflow run."
       fi
 
       PULL=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")
@@ -81,21 +99,26 @@ steps:
       HEAD_SHA=$(jq -r '.head.sha' <<<"$PULL")
       STATE=$(jq -r '.state' <<<"$PULL")
 
-      test "$AUTHOR" = "dependabot[bot]"
-      test "$HEAD_REPO" = "$GITHUB_REPOSITORY"
-      [[ "$HEAD_REF" == dependabot/* ]]
-      test "$HEAD_SHA" = "$REF"
-      test "$STATE" = "open"
+      if ! { [ "$AUTHOR" = "dependabot[bot]" ] &&
+        [ "$HEAD_REPO" = "$GITHUB_REPOSITORY" ] &&
+        [[ "$HEAD_REF" == dependabot/* ]] &&
+        [ "$HEAD_SHA" = "$REF" ] &&
+        [ "$STATE" = "open" ]; }; then
+        skip_stale_run "Pull request #$PR_NUMBER no longer matches the audited Dependabot commit."
+      fi
 
+      echo "found=true" >> "$GITHUB_OUTPUT"
       echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
       echo "ref=$REF" >> "$GITHUB_OUTPUT"
   - name: Checkout pull request head
+    if: steps.pull-request.outputs.found == 'true'
     uses: actions/checkout@v7
     with:
       ref: ${{ steps.pull-request.outputs.ref }}
       fetch-depth: 0
       persist-credentials: false
   - name: Use Node.js 24
+    if: steps.pull-request.outputs.found == 'true'
     uses: actions/setup-node@v7
     with:
       node-version: 24
@@ -103,7 +126,7 @@ steps:
 
 post-steps:
   - name: Require a decisive agent outcome
-    if: always()
+    if: always() && steps.pull-request.outputs.found == 'true'
     run: |
       set -euo pipefail
 
@@ -166,6 +189,10 @@ safe-outputs:
     title-prefix: "[deps] "
     labels: [dependencies]
     max: 1
+  # Stale Dependabot head commits are routine, so keep the skip in the run
+  # summary instead of opening a tracking issue for every rebase.
+  noop:
+    report-as-issue: false
   jobs:
     record-dependency-audit:
       name: Record dependency audit

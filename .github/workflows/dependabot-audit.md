@@ -22,7 +22,7 @@ if: >-
 # behavior. Bump this occasionally and re-run `gh aw compile`.
 engine:
   id: copilot
-  model: claude-opus-5
+  model: claude-opus-4.8
 strict: true
 max-daily-ai-credits: 20000
 

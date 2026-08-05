@@ -171,6 +171,7 @@ safe-outputs:
       - "__tests__/**"
       - "eslint.config.mjs"
       - "jest.config.js"
+      - "next.config.ts"
       - "postcss.config.js"
       - "tsconfig.json"
       - ".prettierrc"

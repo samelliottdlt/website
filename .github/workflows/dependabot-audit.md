@@ -40,7 +40,7 @@ network:
 
 tools:
   github:
-    toolsets: [default]
+    toolsets: [default, actions]
   bash: true
   web-fetch:
 
@@ -438,7 +438,9 @@ stop merely because a custom-step output is unavailable.
 2. Inspect the complete diff and find every use of the dependency in this repository.
 3. Read authoritative release notes, migration guides, and advisories for the exact
    version range.
-4. Inspect the completed `Node.js CI` run and its failed logs, if any.
+4. Inspect the completed `Node.js CI` run and its failed logs, if any. Use the GitHub
+   Actions tools (`list_workflow_runs`, `list_workflow_jobs`, `get_job_logs`) to read the
+   failing step directly; never conclude that CI logs are inaccessible without trying them.
 5. Reproduce relevant failures with the repository's documented npm commands.
 6. When the install or the tooling complains about peers, run `npm install` and
    `npm ls <package>` to map the real constraint, and query the registry

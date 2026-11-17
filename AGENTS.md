@@ -38,6 +38,9 @@ truth for tool versions.
 Keep feature logic beside its route. Move code to a shared directory only when
 multiple features use it.
 
+Keep `README.md` focused on what the site does, repository contents, and essential
+development commands. Put detailed coding-agent and maintenance workflows here.
+
 ## Implementation conventions
 
 - Write strict TypeScript; do not bypass errors with `any` or unsafe casts.
@@ -65,6 +68,38 @@ multiple features use it.
 - Keep runtime packages in `dependencies` and tooling in `devDependencies`.
 - Do not add a package when the platform or an existing dependency provides the
   capability.
+
+## Automated dependency maintenance
+
+Dependabot opens npm updates weekly. The **Website dependency maintenance**
+automation runs daily in the Copilot app, locally under the owner's GitHub
+account. Its schedule and prompt are managed in the app, not this repository;
+the computer and app must be available.
+
+- Use `.github/scripts/dependabot-merge.cjs` as the deterministic merge gate.
+  Copy it from freshly fetched `main` into session artifacts before checking out
+  any PR; never execute a PR's replacement gate.
+- Require the gate on `main` and the legacy `dependabot-audit` and
+  `dependabot-auto-merge` workflows to be absent before automated writes.
+- Use `node TRUSTED_GATE_PATH --check PR_NUMBER HEAD_SHA` to inspect eligibility,
+  then `node TRUSTED_GATE_PATH --merge PR_NUMBER HEAD_SHA` in a clean, isolated
+  checkout of that exact head.
+- Only dependency-only, integrity-pinned npm updates with stable compatible
+  versions qualify. Grouped and transitive-only updates are supported. Majors,
+  prereleases, 0.x minor updates, dependency additions/removals, changed range
+  operators, install-script packages, and topology or metadata changes require
+  review. Compatible range advances on existing locked edges are allowed.
+- The merge gate runs installation, formatting, lint, type checks, tests, and
+  build, then rechecks the exact head/base, branch protection, remote CI,
+  deployment statuses, and review blockers before a SHA-guarded squash merge.
+  Only regeneration of Next.js's managed `next-env.d.ts` is tolerated during
+  validation; other source changes still block merging.
+- Never bypass a refusal, weaken protection, force-push, use admin merging, or
+  queue auto-merge for an unvalidated later commit. Independently withhold updates
+  with known advisories or functional migration risks.
+- Bounded compatibility repairs require fresh CI. Source/config changes, major
+  updates, and other non-low-risk repairs require human review. The automation
+  never closes PRs automatically.
 
 ## Validation
 

@@ -18,6 +18,10 @@ npm run dev
 
 ## Building
 
+Node.js 24 is used locally (`.nvmrc`), in CI, and on Vercel. The `engines.node`
+setting in `package.json` overrides a stale Node.js version in Vercel's project
+settings.
+
 Before building, linting runs automatically. To create a production build:
 
 ```bash
@@ -110,6 +114,8 @@ node TRUSTED_GATE_PATH --merge PR_NUMBER HEAD_SHA
 The merge command runs `npm ci`, formatting, lint, type checking, tests, and the
 production build. It rechecks the head, base, remote checks (including deployment
 statuses), and review blockers before an immediate SHA-guarded squash merge.
+The checkout must start clean. During validation, only Next.js's managed
+`next-env.d.ts` may be regenerated; any source change still blocks the merge.
 Branch protection remains enabled; there is no admin bypass, force push, or
 queued auto-merge that could accidentally approve a later commit.
 

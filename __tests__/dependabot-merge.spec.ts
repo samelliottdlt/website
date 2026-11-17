@@ -1,8 +1,26 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  assertCleanStatus,
   assertLowRiskUpdate,
   assertPullRequest,
 } from "../.github/scripts/dependabot-merge.cjs";
+
+describe("Dependency validation working tree", () => {
+  it("allows Next.js to regenerate its declaration file only after validation", () => {
+    expect(() => assertCleanStatus(" M next-env.d.ts\n")).toThrow(/clean/);
+    expect(assertCleanStatus(" M next-env.d.ts\n", true)).toBe(true);
+    expect(assertCleanStatus("", true)).toBe(false);
+  });
+
+  it("never permits a changed source file or untracked file after validation", () => {
+    expect(() =>
+      assertCleanStatus(" M next-env.d.ts\n M app/page.tsx\n", true),
+    ).toThrow(/clean/);
+    expect(() => assertCleanStatus("?? unexpected.js\n", true)).toThrow(
+      /clean/,
+    );
+  });
+});
 
 function fixture() {
   const manifest = {

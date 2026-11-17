@@ -170,6 +170,15 @@ function assertPullRequest(pull, sha, baseSha) {
   );
 }
 
+function assertCleanStatus(status, afterBuild = false) {
+  const changes = status.split(/\r?\n/).filter(Boolean);
+  assert(
+    changes.every((line) => afterBuild && line === " M next-env.d.ts"),
+    "The working tree must be clean; only Next.js-generated next-env.d.ts may change during validation.",
+  );
+  return changes.length > 0;
+}
+
 function gh(path, ...args) {
   return JSON.parse(
     execFileSync("gh", ["api", "--hostname", "github.com", path, ...args], {
@@ -289,12 +298,12 @@ function main() {
       sha,
     "The working tree must be checked out at the exact PR head.",
   );
-  const assertClean = () =>
-    assert(
+  const assertClean = (afterBuild = false) =>
+    assertCleanStatus(
       execFileSync("git", ["status", "--porcelain"], {
         encoding: "utf8",
-      }).trim() === "",
-      "The working tree must be clean.",
+      }),
+      afterBuild,
     );
   assertClean();
   for (const args of [
@@ -311,7 +320,9 @@ function main() {
       shell: process.platform === "win32",
     });
   }
-  assertClean();
+  if (assertClean(true)) {
+    console.log("Next.js regenerated next-env.d.ts; no source files changed.");
+  }
   inspect(prNumber, sha, baseSha);
   const result = gh(
     `repos/${repository}/pulls/${prNumber}/merge`,
@@ -326,7 +337,7 @@ function main() {
   console.log(`Merged ${repository}#${prNumber} at ${sha}.`);
 }
 
-module.exports = { assertLowRiskUpdate, assertPullRequest };
+module.exports = { assertLowRiskUpdate, assertPullRequest, assertCleanStatus };
 
 if (require.main === module) {
   try {

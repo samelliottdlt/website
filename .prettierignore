@@ -3,4 +3,3 @@
 out
 package-lock.json
 public/gbstudio-assets
-.github/workflows/*.lock.yml

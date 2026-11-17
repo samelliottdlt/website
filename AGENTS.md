@@ -73,6 +73,9 @@ development commands. Put detailed coding-agent and maintenance workflows here.
 - TypeScript 7 provides `tsc` through `@typescript/native`. The `typescript`
   package intentionally aliases the TypeScript 6 compatibility package needed
   by Next.js and typescript-eslint until they support the TypeScript 7 API.
+- `overrides` pins `glob` and `minimatch` inside the `jest` tree to patched
+  majors (GHSA-3g3m-2fjr-6pw4, GHSA-g3hv-75wg-m249). Remove them once Jest
+  depends on fixed versions directly.
 - Keep runtime packages in `dependencies` and tooling in `devDependencies`.
 - Do not add a package when the platform or an existing dependency provides the
   capability.

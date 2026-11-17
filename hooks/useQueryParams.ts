@@ -1,52 +1,88 @@
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type QueryParamValue = string | number | boolean;
 
-interface QueryParamConfig<T extends QueryParamValue> {
+export interface QueryParamConfig<T extends QueryParamValue> {
   key: string;
   defaultValue: T;
   serialize: (value: T) => string;
+  /** Receives `null` when the parameter is absent from the URL. */
   deserialize: (value: string | null) => T;
 }
 
+/** A serialized query parameter; `null` removes it from the URL. */
+export interface QueryParamEntry {
+  key: string;
+  value: string | null;
+}
+
+/** Serializes `value`, omitting defaults to keep URLs clean. */
+export function toQueryParamEntry<T extends QueryParamValue>(
+  config: QueryParamConfig<T>,
+  value: T,
+): QueryParamEntry {
+  return {
+    key: config.key,
+    value: value === config.defaultValue ? null : config.serialize(value),
+  };
+}
+
 /**
- * Custom hook for managing URL query parameters with automatic synchronization.
+ * Returns the query string that represents `entries`, preserving unrelated
+ * parameters from `current`.
+ */
+export function buildQueryString(
+  current: URLSearchParams,
+  entries: QueryParamEntry[],
+): string {
+  const params = new URLSearchParams(current);
+
+  for (const { key, value } of entries) {
+    if (value === null) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+  }
+
+  return params.toString();
+}
+
+/**
+ * Replaces the URL whenever `entries` serialize to a different query string.
+ * Comparing serialized strings (rather than deserialized values) guarantees the
+ * effect converges after a single replace.
+ */
+function useSyncQueryString(entries: QueryParamEntry[]) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const currentQuery = searchParams.toString();
+  const nextQuery = buildQueryString(searchParams, entries);
+
+  useEffect(() => {
+    if (nextQuery === currentQuery) return;
+
+    router.replace(nextQuery ? `?${nextQuery}` : window.location.pathname, {
+      scroll: false,
+    });
+  }, [currentQuery, nextQuery, router]);
+}
+
+/**
+ * Custom hook for managing a URL query parameter with automatic synchronization.
  * Provides a state value and setter that automatically updates the URL when changed.
+ * `config` should be stable (for example, defined at module scope).
  */
 export function useQueryParam<T extends QueryParamValue>(
   config: QueryParamConfig<T>,
 ): [T, (value: T) => void] {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const [value, setValue] = useState<T>(() =>
+    config.deserialize(searchParams.get(config.key)),
+  );
 
-  // Initialize state with URL value or default
-  const initialValue = config.deserialize(searchParams.get(config.key));
-  const [value, setValue] = useState<T>(initialValue);
-
-  // Update URL when value changes
-  useEffect(() => {
-    const currentUrlValue = config.deserialize(searchParams.get(config.key));
-
-    if (value !== currentUrlValue) {
-      const params = new URLSearchParams(searchParams);
-
-      if (value === config.defaultValue) {
-        // Remove param if it's the default value to keep URLs clean
-        params.delete(config.key);
-      } else {
-        params.set(config.key, config.serialize(value));
-      }
-
-      const queryString = params.toString();
-      router.replace(
-        queryString ? `?${queryString}` : window.location.pathname,
-        {
-          scroll: false,
-        },
-      );
-    }
-  }, [value, config, router, searchParams]);
+  useSyncQueryString([toQueryParamEntry(config, value)]);
 
   return [value, setValue];
 }
@@ -54,68 +90,39 @@ export function useQueryParam<T extends QueryParamValue>(
 /**
  * Custom hook for managing multiple query parameters at once.
  * Useful when you need to update multiple parameters together to avoid multiple URL updates.
+ * `configs` should be stable (for example, defined at module scope).
  */
 export function useQueryParams<
   T extends Record<string, QueryParamValue>,
->(configs: { [K in keyof T]: QueryParamConfig<T[K]> }): [
-  T,
-  (updates: Partial<T>) => void,
-] {
+>(configs: {
+  [K in keyof T]: QueryParamConfig<T[K]>;
+}): [T, (updates: Partial<T>) => void] {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const keys = Object.keys(configs) as (keyof T)[];
 
-  // Initialize state with URL values or defaults
-  const initialState = Object.entries(configs).reduce((acc, [key, config]) => {
-    const typedConfig = config as QueryParamConfig<T[keyof T]>;
-    acc[key as keyof T] = typedConfig.deserialize(
-      searchParams.get(typedConfig.key),
-    );
-    return acc;
-  }, {} as T);
-
-  const [values, setValues] = useState<T>(initialState);
-
-  // Update URL when any value changes
-  useEffect(() => {
-    const params = new URLSearchParams();
-    let hasChanges = false;
-
-    // Check if any value differs from current URL params
-    for (const [key, config] of Object.entries(configs)) {
-      const typedConfig = config as QueryParamConfig<T[keyof T]>;
-      const currentValue = values[key as keyof T];
-      const urlValue = typedConfig.deserialize(
-        searchParams.get(typedConfig.key),
-      );
-
-      if (currentValue !== urlValue) {
-        hasChanges = true;
-      }
-
-      if (currentValue !== typedConfig.defaultValue) {
-        params.set(typedConfig.key, typedConfig.serialize(currentValue));
-      }
+  const [values, setValues] = useState<T>(() => {
+    const initial = {} as T;
+    for (const key of keys) {
+      const config = configs[key];
+      initial[key] = config.deserialize(searchParams.get(config.key));
     }
+    return initial;
+  });
 
-    if (hasChanges) {
-      const queryString = params.toString();
-      router.replace(
-        queryString ? `?${queryString}` : window.location.pathname,
-        {
-          scroll: false,
-        },
-      );
-    }
-  }, [values, configs, router, searchParams]);
+  useSyncQueryString(
+    keys.map((key) => toQueryParamEntry(configs[key], values[key])),
+  );
 
-  const updateValues = (updates: Partial<T>) => {
+  const updateValues = useCallback((updates: Partial<T>) => {
     setValues((prev) => ({ ...prev, ...updates }));
-  };
+  }, []);
 
   return [values, updateValues];
 }
 
-// Helper functions for common parameter types
+// Helper functions for common parameter types. Each deserializer only falls
+// back to the default when the parameter is missing or invalid, so every
+// serialized value (including "" and "0") round-trips through the URL.
 export const stringParam = (
   key: string,
   defaultValue: string = "",
@@ -123,7 +130,7 @@ export const stringParam = (
   key,
   defaultValue,
   serialize: (value) => value,
-  deserialize: (value) => value || defaultValue,
+  deserialize: (value) => value ?? defaultValue,
 });
 
 export const numberParam = (
@@ -133,7 +140,11 @@ export const numberParam = (
   key,
   defaultValue,
   serialize: (value) => value.toString(),
-  deserialize: (value) => Number(value) || defaultValue,
+  deserialize: (value) => {
+    if (value === null || value.trim() === "") return defaultValue;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : defaultValue;
+  },
 });
 
 export const booleanParam = (
@@ -143,5 +154,9 @@ export const booleanParam = (
   key,
   defaultValue,
   serialize: (value) => (value ? "true" : "false"),
-  deserialize: (value) => value === "true",
+  deserialize: (value) => {
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return defaultValue;
+  },
 });

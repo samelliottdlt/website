@@ -25,7 +25,6 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "pages/index.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],

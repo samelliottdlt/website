@@ -14,33 +14,51 @@ export type Post = {
   description: string;
 };
 
-export function getSortedPostsData(): Post[] {
-  // Get file names under /posts
-  const fileNames = fs.readdirSync(postsDirectory);
-  const allPostsData: Post[] = fileNames.map((fileName) => {
-    const id = fileName.replace(/\.mdx$/, "");
-    const fullPath = path.join(postsDirectory, fileName);
-    const fileContents = fs.readFileSync(fullPath, "utf8");
-    const matterResult = matter(fileContents);
+const POST_EXTENSION = ".mdx";
 
-    return {
-      id,
-      ...matterResult.data,
-    } as Post;
-  });
-
-  return allPostsData.sort((a, b) => {
-    if (a.date < b.date) {
-      return 1;
-    } else {
-      return -1;
-    }
-  });
+function frontmatterString(value: unknown): string {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return typeof value === "string" ? value : "";
 }
 
-type PostData = {
-  title: string;
-};
+/** Returns the slugs of every post, derived from `.mdx` filenames. */
+export function getPostSlugs(): string[] {
+  return fs
+    .readdirSync(postsDirectory)
+    .filter((fileName) => fileName.endsWith(POST_EXTENSION))
+    .map((fileName) => fileName.slice(0, -POST_EXTENSION.length));
+}
+
+function readPostSource(slug: string): string | null {
+  // Only resolve known slugs so request input never reaches the filesystem.
+  if (!getPostSlugs().includes(slug)) return null;
+  return fs.readFileSync(
+    path.join(postsDirectory, `${slug}${POST_EXTENSION}`),
+    "utf8",
+  );
+}
+
+function toPost(id: string, source: string): Post {
+  const { data } = matter(source);
+  return {
+    id,
+    date: frontmatterString(data.date),
+    title: frontmatterString(data.title),
+    description: frontmatterString(data.description),
+  };
+}
+
+export function getPostData(slug: string): Post | null {
+  const source = readPostSource(slug);
+  return source === null ? null : toPost(slug, source);
+}
+
+export function getSortedPostsData(): Post[] {
+  return getPostSlugs()
+    .map((slug) => getPostData(slug))
+    .filter((post): post is Post => post !== null)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+}
 
 const components = {
   h1: (props: object) => <h1 className="text-4xl font-bold" {...props} />,
@@ -70,11 +88,11 @@ const components = {
 };
 
 export async function parsePost(slug: string) {
-  const fullPath = path.join(postsDirectory, `${slug}.mdx`);
-  const fileContents = fs.readFileSync(fullPath, "utf8");
+  const source = readPostSource(slug);
+  if (source === null) return null;
 
-  const { content, frontmatter } = await compileMDX({
-    source: fileContents,
+  const { content } = await compileMDX({
+    source,
     components,
     options: {
       parseFrontmatter: true,
@@ -84,8 +102,5 @@ export async function parsePost(slug: string) {
     },
   });
 
-  return {
-    content,
-    frontmatter: frontmatter as unknown as PostData,
-  };
+  return { content, post: toPost(slug, source) };
 }

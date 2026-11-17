@@ -4,8 +4,10 @@ import { Suspense } from "react";
 import { formatUtf8ByteSize } from "../../lib/utf8";
 import { useQueryParam, stringParam } from "../../hooks/useQueryParams";
 
+const TEXT_PARAM = stringParam("text", "héllo ✅");
+
 function StringLengthChecker() {
-  const [text, setText] = useQueryParam(stringParam("text", "héllo ✅"));
+  const [text, setText] = useQueryParam(TEXT_PARAM);
 
   return (
     <div className="p-4 max-w-2xl mx-auto">

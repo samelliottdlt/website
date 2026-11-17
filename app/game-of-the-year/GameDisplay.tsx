@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { classNames } from "../../lib/util";
@@ -96,10 +97,12 @@ export default function GameDisplay({ game, allGames }: GameDisplayProps) {
         {/* Game Image Section */}
         <div className="flex justify-center">
           {game.imageUrl ? (
-            <img
+            <Image
               src={game.imageUrl}
               alt={`${game.title} box art`}
-              loading="lazy"
+              width={256}
+              height={256}
+              sizes="256px"
               className={classNames(
                 "w-64 h-64 object-cover rounded-lg shadow-lg transition-all duration-300",
                 isPending ? "opacity-50 scale-95" : "opacity-100 scale-100",

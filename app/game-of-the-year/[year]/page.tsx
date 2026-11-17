@@ -25,6 +25,22 @@ interface GameData {
   name?: string;
 }
 
+// Must match `images.remotePatterns` in next.config.ts.
+const RAWG_MEDIA_ORIGIN = "https://media.rawg.io";
+
+function toAllowedImageUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.origin === RAWG_MEDIA_ORIGIN &&
+      parsed.pathname.startsWith("/media/")
+      ? parsed.href
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchGameImage(
   gameTitle: string,
   apiKey: string,
@@ -42,7 +58,7 @@ async function fetchGameImage(
 
     if (data.results && data.results.length > 0) {
       const game: GameData = data.results[0];
-      return game.background_image || null;
+      return toAllowedImageUrl(game.background_image);
     }
     return null;
   } catch (error) {

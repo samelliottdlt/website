@@ -14,12 +14,13 @@ const DEFAULT_LENGTH = 32;
 const MAX_LENGTH = 1000000; // 1 million character limit
 const CHUNK_SIZE = 10000; // Size of chunks for long string generation
 const PRESET_LENGTHS = [32, 100, 1000, 10000, 100000, 500000, 1000000];
+const QUERY_PARAMS = {
+  length: numberParam("length", DEFAULT_LENGTH),
+  allowOverLimit: booleanParam("allowOverLimit", false),
+};
 
 function RandomStringGenerator() {
-  const [params, setParams] = useQueryParams({
-    length: numberParam("length", DEFAULT_LENGTH),
-    allowOverLimit: booleanParam("allowOverLimit", false),
-  });
+  const [params, setParams] = useQueryParams(QUERY_PARAMS);
 
   // Destructure for easier access
   const { length, allowOverLimit } = params;

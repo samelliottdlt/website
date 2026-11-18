@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const revalidate = 2592000; // 30 days
 export const alt = "Music Sequencer thumbnail";
 export const size = {

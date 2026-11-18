@@ -62,9 +62,20 @@ development commands. Put detailed coding-agent and maintenance workflows here.
 
 - Use npm and commit `package-lock.json` with dependency changes.
 - Do not edit `package-lock.json` or `next-env.d.ts` manually.
+- Lockfile `resolved` URLs must stay on `https://registry.npmjs.org/`; Vercel,
+  GitHub Actions, and Dependabot install from the public registry. Some local
+  machines are configured with a corporate npm mirror that cannot reach the
+  public registry and lags recent releases, so `npm ci` fails there with 404s
+  for newly published versions. Do not rewrite the lockfile against that mirror
+  or downgrade packages to work around it. Run installs, lockfile changes, and
+  full validation in a remote session (Codespace or cloud agent) with public
+  registry access, or rely on GitHub Actions CI.
 - TypeScript 7 provides `tsc` through `@typescript/native`. The `typescript`
   package intentionally aliases the TypeScript 6 compatibility package needed
   by Next.js and typescript-eslint until they support the TypeScript 7 API.
+- `overrides` pins `glob` and `minimatch` inside the `jest` tree to patched
+  majors (GHSA-3g3m-2fjr-6pw4, GHSA-g3hv-75wg-m249). Remove them once Jest
+  depends on fixed versions directly.
 - Keep runtime packages in `dependencies` and tooling in `devDependencies`.
 - Do not add a package when the platform or an existing dependency provides the
   capability.

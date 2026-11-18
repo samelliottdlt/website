@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getSortedPostsData } from "./parser";
 
 function Blog() {
@@ -13,13 +14,13 @@ function Blog() {
           >
             <div className="flex justify-between space-x-3">
               <div className="min-w-0 flex-1">
-                <a
-                  href={`blog/${post.id}`}
+                <Link
+                  href={`/blog/${encodeURIComponent(post.id)}`}
                   className="block focus:outline-none"
                 >
                   <span className="absolute inset-0" aria-hidden="true" />
                   <p className="truncate text-sm text-gray-500">{post.title}</p>
-                </a>
+                </Link>
               </div>
               <time
                 dateTime={post.date}

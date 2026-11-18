@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    // Game of the Year artwork from the RAWG API.
+    remotePatterns: [new URL("https://media.rawg.io/media/**")],
+  },
   experimental: {
     // This project aliases the `typescript` dependency to the TypeScript 6
     // compatibility package (`@typescript/typescript6`) while using the

@@ -9,6 +9,9 @@ The blog reads local files from `posts/` and renders them through
   syntax highlighting, and custom MDX components.
 - The index uses the filename as the slug. Keep links and `[slug]` resolution
   consistent with that convention.
+- Posts are statically generated with `generateStaticParams` and
+  `dynamicParams = false`; unknown slugs must 404 and never reach the
+  filesystem.
 - Keep filesystem and MDX compilation code server-only.
 - Register reusable MDX components in the central `components` map rather than
   adding page-specific parsing paths.

@@ -1,14 +1,18 @@
 import "../styles/globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import Sidebar from "../components/Sidebar";
 
-export const metadata = {
+// Prefer the stable production domain so shared links and Open Graph images
+// do not point at a single deployment's URL.
+const siteHost =
+  process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+
+export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000",
+    siteHost ? `https://${siteHost}` : "http://localhost:3000",
   ),
   title: "Sam's Fun House",
   description: "I just put whatever here",
@@ -40,8 +44,8 @@ export default function RootLayout({
             {children}
           </main>
         </div>
+        <Analytics />
       </body>
-      <Analytics />
     </html>
   );
 }

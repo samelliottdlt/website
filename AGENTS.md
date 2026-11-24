@@ -92,25 +92,40 @@ the computer and app must be available.
   any PR; never execute a PR's replacement gate.
 - Require the gate on `main` and the legacy `dependabot-audit` and
   `dependabot-auto-merge` workflows to be absent before automated writes.
-- Use `node TRUSTED_GATE_PATH --check PR_NUMBER HEAD_SHA` to inspect eligibility,
-  then `node TRUSTED_GATE_PATH --merge PR_NUMBER HEAD_SHA` in a clean, isolated
-  checkout of that exact head.
-- Only dependency-only, integrity-pinned npm updates with stable compatible
-  versions qualify. Grouped and transitive-only updates are supported. Majors,
-  prereleases, 0.x minor updates, dependency additions/removals, changed range
-  operators, install-script packages, and topology or metadata changes require
-  review. Compatible range advances on existing locked edges are allowed.
-- The merge gate runs installation, formatting, lint, type checks, tests, and
-  build, then rechecks the exact head/base, branch protection, remote CI,
-  deployment statuses, and review blockers before a SHA-guarded squash merge.
-  Only regeneration of Next.js's managed `next-env.d.ts` is tolerated during
-  validation; other source changes still block merging.
+- The coordinator starts one remote worker per qualifying PR, each with only
+  that PR's context, and caps concurrent workers to avoid overlapping installs.
+- Use `node TRUSTED_GATE_PATH --check PR_NUMBER HEAD_SHA` to inspect eligibility
+  and tier, then merge in a clean, isolated checkout of that exact head.
+- **Automatic tier** (`--merge`): stable forward updates, including majors, of
+  tooling that cannot change shipped output (`@types/*`, ESLint, Prettier,
+  Jest, TypeScript) and their tooling-only transitive packages, plus
+  semver-compatible updates of everything else.
+- **Runtime tier** (`--merge-runtime`): majors or 0.x minors reachable from
+  runtime or build-affecting dependencies (for example Next.js, React, MDX,
+  Tailwind), added runtime packages, metadata changes, and bounded `fix(deps):`
+  repairs of at most 300 lines in `app/`, `components/`, `hooks/`, or `lib/`.
+  Before using it, read release notes and migration guides, run the production
+  build locally, and check every affected route in a browser for errors and
+  working interactions. Leave the PR for human review when that is not possible.
+- Always refused: prereleases, downgrades, changed range operators, direct
+  dependency additions/removals, npm script or other manifest changes,
+  install-script packages, non-registry or unpinned tarballs, license changes,
+  more than three repair commits, and changes to tests, config, `.github/**`,
+  or instruction files.
+- The merge gate runs installation, formatting, lint, type checks, tests, build,
+  and an HTTP smoke test of every static and prerendered route on a local
+  production server. It rechecks the exact head/base, required CI, an
+  up-to-date head, resolved review threads, deployment statuses, and review
+  blockers before a SHA-guarded squash merge. Only regeneration of Next.js's
+  managed `next-env.d.ts` is tolerated during validation.
 - Never bypass a refusal, weaken protection, force-push, use admin merging, or
   queue auto-merge for an unvalidated later commit. Independently withhold updates
-  with known advisories or functional migration risks.
-- Bounded compatibility repairs require fresh CI. Source/config changes, major
-  updates, and other non-low-risk repairs require human review. The automation
-  never closes PRs automatically.
+  with known advisories.
+- After a repair push, wait for fresh CI on the new head before merging. The
+  automation never closes PRs automatically.
+- Remote workers need public npm, `fonts.googleapis.com`, and
+  `fonts.gstatic.com` access because `next/font/google` downloads Inter during
+  builds.
 
 ## Validation
 
